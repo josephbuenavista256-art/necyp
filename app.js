@@ -1,6 +1,6 @@
 // CONFIGURATION
-const SUPABASE_URL = "sb_publishable_xVZvbjf4t0vRSZCWluJlag_VAURlr6h"; 
-const SUPABASE_ANON_KEY = "https://nbcuzewrgdfdaiowbovc.supabase.co/rest/v1/";
+const SUPABASE_URL = "https://nbcuzewrgdfdaiowbovc.supabase.co/rest/v1/"; 
+const SUPABASE_ANON_KEY = "sb_publishable_xVZvbjf4t0vRSZCWluJlag_VAURlr6h";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let isAdmin = false;
