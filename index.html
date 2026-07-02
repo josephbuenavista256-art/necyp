@@ -32,7 +32,7 @@
         }
 
         /* ==========================================================================
-           STRICT CONTRAST & TYPOGRAPHY OVERRIDES (For dynamic elements from app.js)
+           STRICT CONTRAST & TYPOGRAPHY OVERRIDES
            ========================================================================== */
         
         /* 1. UNIVERSAL CARD CONTAINERS */
@@ -282,7 +282,6 @@
                             <option value="4th Sunday">4th Sunday</option>
                             <option value="5th Sunday">5th Sunday</option>
                         </select>
-                        <button class="admin-only bg-stone-100 text-stone-950 px-5 py-2.5 rounded-lg font-bold hidden hover:bg-stone-200 transition-colors cursor-pointer text-sm shadow-md" id="add-schedule-btn" onclick="openScheduleModal()"></button>
                     </div>
                 </div>
                 <div id="schedule-container" class="p-4"></div>
@@ -324,7 +323,12 @@
                 <div class="overflow-hidden rounded-xl border border-white/10 shadow-xl bg-stone-950/80">
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-stone-950 text-stone-200 text-xs font-bold uppercase tracking-wider border-b border-white/15">
-                            <tr><th class="p-4 pl-6">Member Name</th><th class="p-4">Amount</th><th class="p-4">Date Recorded</th><th class="admin-only p-4 text-center hidden">Actions</th></tr>
+                            <tr>
+                                <th class="p-4 pl-6">Member Name</th>
+                                <th class="p-4">Amount</th>
+                                <th class="p-4">Date Recorded</th>
+                                <th class="admin-only p-4 text-center hidden">Actions</th>
+                            </tr>
                         </thead>
                         <tbody id="piso-table-body" class="divide-y divide-white/5 bg-stone-900/40"></tbody>
                     </table>
@@ -355,7 +359,13 @@
                 <div class="overflow-hidden rounded-xl border border-white/10 shadow-xl bg-stone-950/80">
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-stone-950 text-stone-200 text-xs font-bold uppercase tracking-wider border-b border-white/15">
-                            <tr><th class="p-4 pl-6">Transaction Type</th><th class="p-4">Amount Given</th><th class="p-4">Date</th><th class="p-4">Remarks / Details</th><th class="admin-only p-4 text-center hidden">Actions</th></tr>
+                            <tr>
+                                <th class="p-4 pl-6">Transaction Type</th>
+                                <th class="p-4">Amount Given</th>
+                                <th class="p-4">Date</th>
+                                <th class="p-4">Remarks / Details</th>
+                                <th class="admin-only p-4 text-center hidden">Actions</th>
+                            </tr>
                         </thead>
                         <tbody id="funds-table-body" class="divide-y divide-white/5 bg-stone-900/40"></tbody>
                     </table>
