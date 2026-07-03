@@ -1,6 +1,6 @@
 // PASTE YOUR ACTUAL REVEALED SUPABASE KEY INSIDE THE HOOK BELOW
-        const SUPABASE_URL = "https://nbcuzewrgfdaiowbovc.supabase.co"; 
-        const SUPABASE_ANON_KEY = "PASTE_YOUR_ACTUAL_eyJhbGciOi..._LONG_KEY_HERE"; 
+        const SUPABASE_URL = "https://nbcuzewrgdfdaiowbovc.supabase.co"; 
+        const SUPABASE_ANON_KEY = "sb_publishable_xVZvbjf4t0vRSZCWluJlag_VAURlr6h"; 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
         
         let isAdmin = false; 
