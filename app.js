@@ -109,31 +109,33 @@
         }
 
         // SUPABASE BACKEND CLOUD SIGNIN INTERACTION LAYER [cite: 386]
-        async function login() {
-            const email = document.getElementById('login-email').value; // [cite: 385]
-            const password = document.getElementById('login-password').value; // [cite: 385]
-            const loginBtn = document.getElementById('login-btn');
-            
-            if(!email || !password) {
-                showToast("Please provide valid authentication credentials.", "warning");
-                return;
-            }
+      async function login() {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const loginBtn = document.getElementById('login-btn');
+    
+    if(!email || !password) {
+        showToast("Mangyaring maglagay ng email at password.", "warning");
+        return;
+    }
 
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = `<span>Connecting Node Instance...</span>`;
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = `<span>Kumokonekta...</span>`;
 
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); // [cite: 386]
-            
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = `<span>Sign In As Admin</span>`;
+    // Dito natin susuriin ang response
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    
+    loginBtn.disabled = false;
+    loginBtn.innerHTML = `<span>Sign In As Admin</span>`;
 
-            if (error) {
-                showToast("Authentication Failed: " + error.message, "error"); // [cite: 387]
-            } else {
-                showToast("Ecclesiastical credential verified successfully.", "success");
-                toggleViewMode(false); // [cite: 388]
-            }
-        }
+    if (error) {
+        console.error("Supabase Auth Error Details:", error); // Lalabas ito sa F12 Console
+        showToast("Authentication Failed: " + error.message, "error");
+    } else {
+        showToast("Matagumpay na nakakonekta!", "success");
+        toggleViewMode(false);
+    }
+}
 
         function logout() {
             supabaseClient.auth.signOut(); // [cite: 388]
