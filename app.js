@@ -1,13 +1,12 @@
-// CORE CONFIGURATION PARAMETERS [cite: 381]
-        const SUPABASE_URL = "https://nbcuzewrgdfdaiowbovc.supabase.co; // [cite: 381]
-        const SUPABASE_ANON_KEY = "sb_publishable_xVZvbjf4t0vRSZCWluJlag_VAURlr6h"; // [cite: 381]
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // [cite: 381]
+// PASTE YOUR ACTUAL REVEALED SUPABASE KEY INSIDE THE HOOK BELOW
+        const SUPABASE_URL = "https://nbcuzewrgfdaiowbovc.supabase.co"; 
+        const SUPABASE_ANON_KEY = "PASTE_YOUR_ACTUAL_eyJhbGciOi..._LONG_KEY_HERE"; 
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
         
-        let isAdmin = false; // [cite: 381]
+        let isAdmin = false; 
         let currentActiveTabName = 'announcements';
         let isGlobalThemeDarkMode = false;
 
-        // PLATFORM TOAST ENGINE MESSAGING MIDDLEWARE
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -26,34 +25,27 @@
             `;
             container.appendChild(toast);
             
-            // Trigger animation frame layout properties
             setTimeout(() => {
                 toast.classList.remove('translate-x-5', 'opacity-0');
             }, 10);
             
-            // Auto clean layout nodes tracking parameters
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-x-2');
                 setTimeout(() => toast.remove(), 300);
             }, 4500);
         }
 
-        // INPUT FIELD VALUE OBSERVERS SECURE VIEWS
         function togglePasswordVisibility(fieldId) {
             const field = document.getElementById(fieldId);
             field.type = field.type === 'password' ? 'text' : 'password';
         }
 
-        // ROUTE SYNC TAB MANAGER SWAP ARCHITECTURE
         function switchTab(tabName) {
             currentActiveTabName = tabName;
-            
-            // Toggle view panels
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden')); // [cite: 382]
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden')); 
             const target = document.getElementById(`tab-${tabName}`);
-            if (target) target.classList.remove('hidden'); // [cite: 382]
+            if (target) target.classList.remove('hidden'); 
             
-            // Track dynamic link side active visual cues
             document.querySelectorAll('.nav-link').forEach(el => {
                 if (el.getAttribute('data-tab') === tabName) {
                     el.classList.add('bg-blue-600/10', 'text-blue-500', 'dark:bg-blue-500/10');
@@ -64,10 +56,9 @@
                 }
             });
 
-            fetchData(tabName); // [cite: 382]
+            fetchData(tabName); 
         }
 
-        // CONTROLLER LAYER GRAPHICS LIGHTNING SCHEME OVERRIDES
         function toggleThemeMode() {
             isGlobalThemeDarkMode = !isGlobalThemeDarkMode;
             const rootHtml = document.documentElement;
@@ -82,69 +73,72 @@
             }
         }
 
-        // ACCOUNT CONFIG VIEWER INSTANCES MANAGEMENT
         function toggleViewMode(asGuest) {
-            document.getElementById('auth-container').classList.add('hidden'); // [cite: 382]
-            document.getElementById('app-container').classList.remove('hidden'); // [cite: 382]
-            isAdmin = !asGuest; // [cite: 383]
+            document.getElementById('auth-container').classList.add('hidden'); 
+            document.getElementById('app-container').classList.remove('hidden'); 
+            isAdmin = !asGuest; 
             
-            // Interface presentation parameters context
-            document.getElementById('user-role-badge').innerText = isAdmin ? "Admin Mode Active" : "Member View (Read-Only)"; // [cite: 383]
+            document.getElementById('user-role-badge').innerText = isAdmin ? "Admin Mode Active" : "Member View (Read-Only)"; 
             document.getElementById('avatar-display').innerText = isAdmin ? "A" : "G";
             document.getElementById('header-user-title').innerText = isAdmin ? "Administrator Node" : "Visitor Instance";
             document.getElementById('header-user-subtitle').innerText = isAdmin ? "Full Structural Access" : "Read-only Session";
 
-            applyPermissions(); // [cite: 383]
-            switchTab('announcements'); // [cite: 383]
+            applyPermissions(); 
+            switchTab('announcements'); 
         }
 
         function applyPermissions() {
             document.querySelectorAll('.admin-only').forEach(el => {
                 if (isAdmin) {
-                    el.classList.remove('hidden'); // [cite: 384]
+                    el.classList.remove('hidden'); 
                 } else {
-                    el.classList.add('hidden'); // [cite: 384]
+                    el.classList.add('hidden'); 
                 }
             });
         }
 
-async function login() {
-    // 1. Pilitin muna nating buksan ang dashboard para i-test kung gumagana ang UI mo
-    console.log("Sinusubukang pumasok sa dashboard...");
-    
-    try {
-        // Palitan mo ito kung ano man ang totoong function mo pang-lipat ng view
-        // Halimbawa: pilitin nating gawing true ang admin state
-        isAdmin = true; 
-        
-        // Kung may function ka na nagpapakita ng member/admin dashboard, tawagin mo rito:
-        // toggleViewMode(true); 
-        
-        showToast("Testing: Pumasok sa dashboard!", "success");
-    } catch (err) {
-        console.error("May error sa UI transition mo:", err);
-    }
-}
-        function logout() {
-            supabaseClient.auth.signOut(); // [cite: 388]
-            isAdmin = false; // [cite: 389]
-            showToast("Session instances purged successfully.");
-            document.getElementById('app-container').classList.add('hidden'); // [cite: 389]
-            document.getElementById('auth-container').classList.remove('hidden'); // [cite: 389]
+        async function login() {
+            const email = document.getElementById('login-email').value; 
+            const password = document.getElementById('login-password').value; 
+            const loginBtn = document.getElementById('login-btn');
+            
+            if(!email || !password) {
+                showToast("Please provide valid authentication credentials.", "warning");
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = `<span>Connecting Node Instance...</span>`;
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); 
+            
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = `<span>Sign In As Admin</span>`;
+
+            if (error) {
+                showToast("Authentication Failed: " + error.message, "error"); 
+            } else {
+                showToast("Ecclesiastical credential verified successfully.", "success");
+                toggleViewMode(false); 
+            }
         }
 
-        // CONTENT LOADER RENDERING MIDDLEWARE LAYER INTERFACES [cite: 389]
+        function logout() {
+            supabaseClient.auth.signOut(); 
+            isAdmin = false; 
+            showToast("Session instances purged successfully.");
+            document.getElementById('app-container').classList.add('hidden'); 
+            document.getElementById('auth-container').classList.remove('hidden'); 
+        }
+
         async function fetchData(tab) {
             const loader = document.getElementById('tab-skeleton-loader');
-            const zone = document.getElementById('active-tab-render-zone');
-            
             loader.classList.remove('hidden');
             
             try {
-                // ANNOUNCEMENTS MODULE LOGIC RENDERING MATRIX [cite: 389]
                 if (tab === 'announcements') {
-                    let { data } = await supabaseClient.from('announcements').select('*').order('created_at', { ascending: false }); // [cite: 389]
-                    let container = document.getElementById('announcements-list'); // [cite: 390]
+                    let { data } = await supabaseClient.from('announcements').select('*').order('created_at', { ascending: false }); 
+                    let container = document.getElementById('announcements-list'); 
                     
                     container.innerHTML = data?.map(item => `
                         <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 card-hover-lift flex justify-between items-start gap-4">
@@ -156,28 +150,27 @@ async function login() {
                                 <button onclick="openEditModal('announcement', ${item.id}, '${item.title}', '${item.content}')" class="text-[11px] font-bold bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white p-1.5 px-3 rounded-lg transition-all">Edit</button>
                                 <button onclick="deleteData('announcements', ${item.id})" class="text-[11px] font-bold bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white p-1.5 px-3 rounded-lg transition-all">Remove</button>
                             </div>
-                        </div>`).join('') || '<p class="text-xs text-slate-400 italic">No community updates deployed currently.</p>'; // [cite: 392]
+                        </div>`).join('') || '<p class="text-xs text-slate-400 italic">No community updates deployed currently.</p>'; 
                 }
 
-                // SUNDAY ASSIGNMENT WEEKLY TEMPLATES SCHEDULING INTERFACES [cite: 393]
                 if (tab === 'schedule') {
-                    const selectedSunday = document.getElementById('sunday-filter').value; // [cite: 393]
-                    let { data } = await supabaseClient.from('monthly_schedules').select('*').eq('sunday_week', selectedSunday); // [cite: 394]
-                    let container = document.getElementById('schedule-container'); // [cite: 394]
+                    const selectedSunday = document.getElementById('sunday-filter').value; 
+                    let { data } = await supabaseClient.from('monthly_schedules').select('*').eq('sunday_week', selectedSunday); 
+                    let container = document.getElementById('schedule-container'); 
                     
-                    if (!data || data.length === 0) { // [cite: 395]
+                    if (!data || data.length === 0) { 
                         container.innerHTML = `
                             <div class="p-8 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 text-center space-y-3 bg-white dark:bg-slate-900">
                                 <p class="text-xs text-slate-500">No organizational music workflow timeline assigned for <b>${selectedSunday}</b>.</p>
                                 <button onclick="setupCustomSunday('${selectedSunday}')" class="admin-only inline-flex bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-blue-500 transition-all cursor-pointer shadow-md">+ Generate Workflow Struct Template</button>
                             </div>
                         `;
-                        applyPermissions(); // [cite: 396]
+                        applyPermissions(); 
                         loader.classList.add('hidden');
                         return;
                     }
 
-                    let sched = data[0]; // [cite: 396]
+                    let sched = data[0]; 
                     container.innerHTML = `
                         <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-6">
                             <div class="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
@@ -194,22 +187,21 @@ async function login() {
                                 <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900"><b>🎸 Bass Core:</b> <span class="text-slate-600 dark:text-slate-400 ml-1">${sched.bass || 'Unassigned'}</span></div>
                                 <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900"><b>🥁 Rhythm Percussion:</b> <span class="text-slate-600 dark:text-slate-400 ml-1">${sched.drummer || 'Unassigned'}</span></div>
                                 <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900"><b>🎹 Synthesizer Keyboard:</b> <span class="text-slate-600 dark:text-slate-400 ml-1">${sched.keyboard || 'Unassigned'}</span></div>
-                                <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900 sm:col-span-2 md:col-span-3"><b>💻 Multimedia Operations Operator:</b> <span class="text-slate-600 dark:text-slate-400 ml-1">${sched.multimedia || 'Unassigned'}</span></div>
+                                <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900 sm:col-span-2 md:col-span-3"><b>💻 Multimedia Operations:</b> <span class="text-slate-600 dark:text-slate-400 ml-1">${sched.multimedia || 'Unassigned'}</span></div>
                             </div>
                             <button onclick="openEditScheduleModal(${sched.id})" class="admin-only w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm">✏️ Remap Dynamic Lineup Allocation Roles</button>
                         </div>
                     `;
                 }
 
-                // CHURCH OFFICERS ROSTER FRAMEWORKS [cite: 406]
                 if (tab === 'officers-list') {
-                    let { data } = await supabaseClient.from('church_officers').select('*').order('created_at', { ascending: true }); // [cite: 406]
-                    let container = document.getElementById('officers-grid'); // [cite: 407]
+                    let { data } = await supabaseClient.from('church_officers').select('*').order('created_at', { ascending: true }); 
+                    let container = document.getElementById('officers-grid'); 
                     
                     container.innerHTML = data?.map(item => `
                         <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center card-hover-lift relative">
                             <div class="w-24 h-24 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-950 mb-3 shadow-inner">
-                                <img src="${item.image_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}" class="w-full h-full object-cover" alt="Officer Asset Portfolio">
+                                <img src="${item.image_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}" class="w-full h-full object-cover" alt="Officer">
                             </div>
                             <h3 class="font-bold text-xs text-slate-900 dark:text-white tracking-tight">${item.name}</h3>
                             <p class="text-[10px] text-blue-500 font-bold uppercase tracking-wider mt-0.5">${item.position}</p>
@@ -218,13 +210,12 @@ async function login() {
                                 <button onclick="openEditOfficerModal(${item.id}, '${item.name}', '${item.position}', '${item.image_url}')" class="text-[10px] font-bold text-amber-500 hover:underline">Modify</button>
                                 <button onclick="deleteData('church_officers', ${item.id})" class="text-[10px] font-bold text-red-500 hover:underline">Purge</button>
                             </div>
-                        </div>`).join('') || '<p class="text-xs text-slate-400 italic">No execution officers populated currently.</p>'; // [cite: 409]
+                        </div>`).join('') || '<p class="text-xs text-slate-400 italic">No execution officers populated currently.</p>'; 
                 }
 
-                // SYSTEM MEETINGS TIMELINES LEDGERS [cite: 410]
                 if (tab === 'officers-meetings') {
-                    let { data } = await supabaseClient.from('officer_plans').select('*').order('meeting_date', { ascending: false }); // [cite: 410]
-                    let container = document.getElementById('meetings-list'); // [cite: 411]
+                    let { data } = await supabaseClient.from('officer_plans').select('*').order('meeting_date', { ascending: false }); 
+                    let container = document.getElementById('meetings-list'); 
                     
                     container.innerHTML = data?.map(item => `
                         <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 card-hover-lift flex justify-between items-start gap-4">
@@ -240,9 +231,8 @@ async function login() {
                         </div>`).join('') || '<p class="text-xs text-slate-400 italic">No planned executive metrics located.</p>';
                 }
 
-                // PISO A DAY TRACKING LEDGER STREAM [cite: 247]
                 if (tab === 'piso-day') {
-                    let { data } = await supabaseClient.from('piso_a_day').select('*').order('date_recorded', { ascending: false }); // [cite: 247]
+                    let { data } = await supabaseClient.from('piso_a_day').select('*').order('date_recorded', { ascending: false }); 
                     document.getElementById('piso-table-body').innerHTML = data?.map(item => `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors tabular-row-item">
                             <td class="p-4 pl-6 font-medium text-slate-900 dark:text-white search-target-field">${item.member_name}</td>
@@ -254,13 +244,12 @@ async function login() {
                                     <button onclick="deleteData('piso_a_day', ${item.id})" class="text-[11px] bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white p-1 px-2.5 rounded-md transition-all font-semibold">Purge</button>
                                 </div>
                             </td>
-                        </tr>`).join('') || '<tr><td colspan="4" class="p-6 text-center text-xs text-slate-400 italic">No microscopic ledger tracking inputs captured yet.</td></tr>'; // [cite: 249]
+                        </tr>`).join('') || '<tr><td colspan="4" class="p-6 text-center text-xs text-slate-400 italic">No microscopic ledger tracking inputs captured yet.</td></tr>'; 
                 }
 
-                // CONSENSUS EVENT VOTE ENGAGEMENT ENGINE [cite: 249]
                 if (tab === 'polls') {
-                    let { data } = await supabaseClient.from('event_polls').select('*').order('created_at', { ascending: false }); // [cite: 249]
-                    let container = document.getElementById('polls-list'); // [cite: 250]
+                    let { data } = await supabaseClient.from('event_polls').select('*').order('created_at', { ascending: false }); 
+                    let container = document.getElementById('polls-list'); 
                     
                     container.innerHTML = data?.map(item => `
                         <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between text-center card-hover-lift">
@@ -279,12 +268,11 @@ async function login() {
                                     <button onclick="deleteData('event_polls', ${item.id})" class="text-red-500 font-bold hover:underline">Purge Record</button>
                                 </div>
                             </div>
-                        </div>`).join('') || '<p class="text-xs text-slate-400 italic">No community programmatic options deployed.</p>'; // [cite: 251]
+                        </div>`).join('') || '<p class="text-xs text-slate-400 italic">No community programmatic options deployed.</p>'; 
                 }
 
-                // TRANSPARENT CHURCH LEDGERS ACCOUNTS CORE [cite: 251]
                 if (tab === 'funds') {
-                    let { data } = await supabaseClient.from('church_funds').select('*').order('date_recorded', { ascending: false }); // [cite: 251]
+                    let { data } = await supabaseClient.from('church_funds').select('*').order('date_recorded', { ascending: false }); 
                     document.getElementById('funds-table-body').innerHTML = data?.map(item => `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors tabular-row-item">
                             <td class="p-4 pl-6 font-bold text-slate-900 dark:text-white search-target-field uppercase tracking-wider text-[10px]">${item.type}</td>
@@ -297,10 +285,10 @@ async function login() {
                                     <button onclick="deleteData('church_funds', ${item.id})" class="text-[11px] bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white p-1 px-2 rounded-md transition-all font-semibold">Purge</button>
                                 </div>
                             </td>
-                        </tr>`).join('') || '<tr><td colspan="5" class="p-6 text-center text-xs text-slate-400 italic">No financial ledger entries resolved inside storage layer.</td></tr>'; // [cite: 253]
+                        </tr>`).join('') || '<tr><td colspan="5" class="p-6 text-center text-xs text-slate-400 italic">No financial ledger entries resolved inside storage layer.</td></tr>'; 
                 }
                 
-                applyPermissions(); // [cite: 253]
+                applyPermissions(); 
             } catch (e) {
                 showToast("Data Layer Mapping Fault: " + e.message, "error");
             } finally {
@@ -308,44 +296,37 @@ async function login() {
             }
         }
 
-        // DESTRUCTION MATRIX WITH TOAST REPLACEMENTS [cite: 254]
         async function deleteData(table, id) {
-            if (!isAdmin) { // [cite: 254]
-                showToast("Access Denied: Logged administrative tokens required.", "error"); // [cite: 254]
-                return; // [cite: 255]
+            if (!isAdmin) { 
+                showToast("Access Denied: Logged administrative tokens required.", "error"); 
+                return; 
             }
-            
-            if (confirm("Confirm core deployment instruction? This action completely wipes item entry metrics natively from the live ledger cloud.")) { // [cite: 255]
-                await supabaseClient.from(table).delete().eq('id', id); // [cite: 255]
+            if (confirm("Confirm core deployment instruction? This action completely wipes item entry metrics natively from the live ledger cloud.")) { 
+                await supabaseClient.from(table).delete().eq('id', id); 
                 showToast("Record dropped completely from cluster layer.", "success");
-                let targetTab = table === 'piso_a_day' ? 'piso-day' : (table === 'officer_plans' ? 'officers-meetings' : (table === 'church_officers' ? 'officers-list' : (table === 'monthly_schedules' ? 'schedule' : (table === 'event_polls' ? 'polls' : (table === 'church_funds' ? 'funds' : table))))); // [cite: 256, 257]
-                fetchData(targetTab); // [cite: 258]
+                let targetTab = table === 'piso_a_day' ? 'piso-day' : (table === 'officer_plans' ? 'officers-meetings' : (table === 'church_officers' ? 'officers-list' : (table === 'monthly_schedules' ? 'schedule' : (table === 'event_polls' ? 'polls' : (table === 'church_funds' ? 'funds' : table))))); 
+                fetchData(targetTab); 
             }
         }
 
-        // QUANTITATIVE AFFINITY AGREEMENT TRACKER OVERRIDES [cite: 258]
         async function voteEvent(id, currentVotes) {
-            await supabaseClient.from('event_polls').update({ votes: currentVotes + 1 }).eq('id', id); // [cite: 258]
+            await supabaseClient.from('event_polls').update({ votes: currentVotes + 1 }).eq('id', id); 
             showToast("Aggregated consensus ledger updated successfully.");
-            fetchData('polls'); // [cite: 259]
+            fetchData('polls'); 
         }
 
-        // SCHEDULING DISPATCH STRUCT LAYER [cite: 259]
         async function setupCustomSunday(weekName) {
-            if (!isAdmin) { // [cite: 259]
-                showToast("Access Denied: Administrative permissions required.", "error"); // [cite: 259]
-                return; // [cite: 260]
+            if (!isAdmin) { 
+                showToast("Access Denied: Administrative permissions required.", "error"); 
+                return; 
             }
             await supabaseClient.from('monthly_schedules').insert([{ sunday_week: weekName, verse: "Proverbs 3:5-6 - Trust in the Lord with all your heart...", worship_leader: '', backup_singers: '', guitar: '', bass: '', drummer: '', keyboard: '', multimedia: '' }]);
             showToast("Dynamic execution structural template provisioned.");
             fetchData('schedule');
         }
 
-        // DYNAMIC NATIVE CLIENT-SIDE SEARCH INTERFACES ENGINE
         function handleGlobalSearch() {
             const query = document.getElementById('global-search-bar').value.toLowerCase();
-            
-            // Search inside list entries or dynamic tabular streams natively
             const inlineCards = document.querySelectorAll('#active-tab-render-zone h3, .search-target-field');
             inlineCards.forEach(item => {
                 const parentBlock = item.closest('.tabular-row-item') || item.closest('.card-hover-lift') || item.closest('.p-5') || item.closest('.bg-white');
@@ -359,7 +340,6 @@ async function login() {
             });
         }
 
-        // NATIVE TABULAR MATRIX EXPORT CONTROLLER SCHEMES
         function exportTableToExcel(tableBodyId, filename = 'Data_Export') {
             const tbody = document.getElementById(tableBodyId);
             if (!tbody || tbody.rows.length === 0) {
@@ -371,7 +351,6 @@ async function login() {
             for (let row of tbody.rows) {
                 let rowData = [];
                 for (let cell of row.cells) {
-                    // Extract data variables skipping the actions element arrays
                     if (!cell.classList.contains('admin-only')) {
                         rowData.push(`"${cell.innerText.replace(/"/g, '""')}"`);
                     }
@@ -389,7 +368,6 @@ async function login() {
             showToast("CSV data metric package streamed successfully.");
         }
 
-        // REUSABLE TABULAR COLUMNS SORTING ALGORITHMS
         let sortingDirectionTogglerState = false;
         function sortTableData(tableBodyId, columnIndex, isNumeric = false) {
             const tbody = document.getElementById(tableBodyId);
@@ -411,7 +389,6 @@ async function login() {
             showToast(`Tabular dimension ordered by selected axis attributes.`);
         }
 
-        // STRUCTURAL INPUT MODALS DIALOG LOGIC CONTROLLERS
         function openModal(type) {
             if (!isAdmin) {
                 showToast("Access Token Fault: Administrative scope missing.", "error");
@@ -425,7 +402,6 @@ async function login() {
             fieldsContainer.innerHTML = '';
             document.getElementById('generic-modal').classList.remove('hidden');
             
-            // Micro-animation runtime frame hooks
             setTimeout(() => {
                 const card = document.getElementById('modal-card-element');
                 card.classList.remove('scale-95', 'opacity-0');
@@ -540,7 +516,6 @@ async function login() {
             }
         }
 
-        // ENTRY INLINE MODIFICATIONS MAPPING REDIRECTS (EDIT LOGICS)
         function openEditModal(module, id, titleOld, contentOld) {
             openModal('announcement');
             document.getElementById('modal-title').innerText = "Update Announcement Vector";
@@ -555,7 +530,7 @@ async function login() {
 
         function openEditScheduleModal(id) {
             if (!isAdmin) return;
-            openModal('announcement'); // recycling fields modal template logic parameters directly
+            openModal('announcement'); 
             document.getElementById('modal-title').innerText = "Modify Workflow Identity Roster";
             document.getElementById('modal-fields').innerHTML = `
                 <div><label class="block font-semibold mb-1 text-slate-400">Worship Leader</label><input type="text" id="f-sc-wl" class="w-full p-2 border rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-200"></div>
@@ -644,9 +619,7 @@ async function login() {
             }, 150);
         }
 
-        // INITIAL LIFE CYCLE HOOKS ON LOAD EVENT INITIATORS
         window.addEventListener('DOMContentLoaded', () => {
-            // Apply native tab selected values state parameters tracking metrics
             switchTab('announcements');
         });
     </script>
