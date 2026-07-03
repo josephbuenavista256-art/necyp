@@ -4,216 +4,203 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nasug-ong Evangelical Church Portal</title>
-    <!-- Tailwind CSS v4 -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style> 
-        /* Strict Elegant Typography & Universal Reset */
+        /* Elegant Editorial Typography & Universal Optimization */
         *, body { 
             font-family: 'Times New Roman', Times, serif !important; 
             box-sizing: border-box;
         }
-        .hidden { display: none; } 
+        .hidden { display: none !important; } 
         
-        /* Premium Unified Editorial Glassmorphism for Inside Tab Pages */
+        /* Premium Soft Blur Editorial Glassmorphism */
         .bg-section-glass {
-            background: rgba(15, 15, 15, 0.85) !important; 
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(15, 21, 36, 0.75) !important; 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         /* Sidebar Glassmorphism */
         .glass-sidebar {
-            background: rgba(12, 15, 22, 0.98);
+            background: rgba(10, 13, 22, 0.92);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
-            border-right: 1px solid rgba(255, 255, 255, 0.15);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* ==========================================================================
-           STRICT CONTRAST & TYPOGRAPHY OVERRIDES
-           ========================================================================== */
-        
-        /* 1. UNIVERSAL CARD CONTAINERS */
+        /* High-Contrast Dynamic Card Layout Architecture */
         .classic-card, 
         [id*="-list"] > div, 
-        [id*="-container"] > div,
+        [id*="-container"] > div:not(.grid),
         #meetings-list > div,
         #polls-list > div {
-            background: rgba(24, 24, 27, 0.98) !important; 
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            padding: 1.5rem !important;
-            border-radius: 0.75rem !important;
+            background: rgba(22, 28, 45, 0.8) !important; 
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            padding: 1.75rem !important;
+            border-radius: 1rem !important;
             margin-bottom: 1.25rem;
             position: relative;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease;
         }
 
-        /* 2. TITLES & HEADINGS INSIDE DYNAMIC CARDS */
+        .classic-card:hover, 
+        [id*="-list"] > div:hover,
+        #meetings-list > div:hover,
+        #polls-list > div:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.25) !important;
+        }
+
+        /* Card Header Typography */
         .classic-card h3, .classic-card h4, 
         [id*="-list"] h3, [id*="-list"] h4,
         [id*="-container"] h3, [id*="-container"] h4,
         #meetings-list h3, #polls-list h3 {
             color: #ffffff !important; 
-            font-size: 1.4rem !important;
+            font-size: 1.35rem !important;
             font-weight: 700 !important;
-            letter-spacing: 0.025em !important;
-            margin-bottom: 0.5rem !important;
-            display: block;
+            letter-spacing: 0.02em !important;
+            margin-bottom: 0.6rem !important;
         }
 
-        /* 3. DESCRIPTIONS / SUB-TEXT */
-        .classic-card p, .classic-card div:not(.action-buttons), 
-        [id*="-list"] p, [id*="-list"] div:not(.action-buttons),
-        [id*="-container"] p, [id*="-container"] div:not(.action-buttons),
+        /* Card Content Prose */
+        .classic-card p, .classic-card div:not(.action-buttons):not(.admin-only), 
+        [id*="-list"] p, [id*="-list"] div:not(.action-buttons):not(.admin-only),
+        [id*="-container"] p, [id*="-container"] div:not(.action-buttons):not(.admin-only),
         #meetings-list p, #polls-list p {
-            color: #f4f4f5 !important; 
-            font-size: 1.15rem !important;
+            color: #f3f4f6 !important; 
+            font-size: 1.1rem !important;
             line-height: 1.6 !important;
         }
 
-        #polls-list p, #polls-list div {
-            text-align: center !important;
-            text-transform: uppercase;
-            font-weight: 600;
-            letter-spacing: 0.05em;
+        /* Polished Secondary Metadata Labels */
+        .classic-card span, .classic-card small,
+        [id*="-list"] span, [id*="-list"] small,
+        #meetings-list span, #meetings-list p.text-sm {
+            color: #d1d5db !important; 
+            font-size: 1rem !important;
         }
 
-        /* 4. CHURCH OFFICERS SPECIFIC FIX */
+        /* Poll Visualization Adjustments */
+        #polls-list p, #polls-list div {
+            text-transform: none;
+            font-weight: normal;
+            letter-spacing: normal;
+        }
+
+        /* Church Officers Display Adjustments */
         #officers-grid > div {
-            background: #ffffff !important; 
+            background: rgba(255, 255, 255, 0.98) !important; 
             border: 1px solid #e4e4e7 !important;
-            padding: 1.25rem !important;
-            border-radius: 0.75rem !important;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+            padding: 1.5rem !important;
+            border-radius: 1rem !important;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3) !important;
             text-align: center;
         }
-        #officers-grid > div h3, 
-        #officers-grid > div p, 
-        #officers-grid > div span,
-        #officers-grid > div div {
-            color: #09090b !important; 
-            font-size: 1.2rem !important;
+        #officers-grid > div h3 {
+            color: #0f172a !important; 
+            font-size: 1.25rem !important;
             font-weight: 700 !important;
-            margin-top: 0.5rem !important;
+            margin-top: 0.75rem !important;
+            margin-bottom: 0.25rem !important;
+        }
+        #officers-grid > div p {
+            color: #2563eb !important; 
+            font-size: 1rem !important;
+            font-weight: 600 !important;
             margin-bottom: 0.5rem !important;
         }
 
-        /* 5. BUTTON SPACING AND COUPLING FIXES */
-        .classic-card button, 
-        [id*="-list"] button, 
-        [id*="-container"] button,
-        .classic-card a,
-        [id*="-list"] a {
-            margin-left: 0.75rem !important;
-            margin-right: 0.75rem !important;
-            display: inline-block !important;
-            font-size: 0.95rem !important;
+        /* High-Contrast Interactive Anchors */
+        a[onclick*="edit"], button[onclick*="edit"], button[onclick*="openEdit"], .text-yellow-500, .text-yellow-400 {
+            color: #f59e0b !important;
             font-weight: 600 !important;
-            text-decoration: none !important;
-            transition: all 0.2s ease;
+        }
+        a[onclick*="edit"]:hover, button[onclick*="edit"]:hover, button[onclick*="openEdit"]:hover {
+            color: #fbbf24 !important;
+            text-decoration: underline !important;
+        }
+        a[onclick*="deleteData"], button[onclick*="deleteData"], .text-red-500, .text-red-400 {
+            color: #ef4444 !important;
+            font-weight: 600 !important;
+        }
+        a[onclick*="deleteData"]:hover, button[onclick*="deleteData"]:hover {
+            color: #f87171 !important;
+            text-decoration: underline !important;
         }
 
-        a[onclick*="edit"], button[onclick*="edit"], .text-yellow-500 {
-            color: #fbbf24 !important; 
-        }
-        a[onclick*="remove"], button[onclick*="remove"], .text-red-500 {
-            color: #ef4444 !important; 
-        }
-
-        .classic-card span, .classic-card small,
-        [id*="-list"] span, [id*="-list"] small,
-        #meetings-list span {
-            color: #d4d4d8 !important; 
-            font-size: 1.05rem !important;
-            display: inline-block;
-            margin-right: 1rem;
-        }
-
-        /* 6. TOTAL VOTES DISPLAY BOX */
-        #polls-list div blockquote, 
-        #polls-list .votes-box,
-        #polls-list > div > div:nth-child(2) {
-            background: #f4f4f5 !important; 
-            border: 1px solid #e4e4e7 !important;
-            border-radius: 0.5rem !important;
-            padding: 0.75rem !important;
-            margin: 1rem 0 !important;
-            text-align: center !important;
-        }
-        #polls-list .votes-box *,
-        #polls-list > div > div:nth-child(2) * {
-            color: #18181b !important; 
-            font-weight: 700 !important;
-            font-size: 1.1rem !important;
-        }
-
-        /* 7. TABLES DATA ENHANCEMENT */
+        /* Table Data Design Architecture */
         table tbody tr td {
             color: #ffffff !important; 
-            font-size: 1.1rem !important;
+            font-size: 1.05rem !important;
             padding: 1.25rem 1rem !important;
         }
-        table tbody tr td:nth-child(4) {
-            color: #e4e4e7 !important; 
-            font-style: italic;
+        table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.03) !important;
         }
-        .text-green-500, [class*="text-green"] {
+        .text-green-500, .text-green-400 {
             color: #4ade80 !important; 
             font-weight: 700 !important;
-            font-size: 1.15rem !important;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
+        /* Standard Custom Scrollbars */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
     </style>
 </head>
-<body class="bg-slate-950 antialiased">
+<body class="bg-slate-950 text-slate-100 antialiased min-h-screen selection:bg-stone-500/30">
 
-    <!-- LOGIN AREA -->
-    <div id="auth-container" class="min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat relative bg-fixed px-4" style="background-image: url('churchlogo.png.jpg');">
-        <div class="absolute inset-0 bg-slate-950/75 pointer-events-none"></div>
+    <div id="auth-container" class="min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat relative bg-fixed px-4 transition-all duration-500" style="background-image: url('churchlogo.png.jpg');">
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md pointer-events-none"></div>
 
-        <div class="relative w-full max-w-4xl rounded-2xl shadow-2xl border border-white/10 bg-stone-900/95 backdrop-blur-xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
+        <div class="relative w-full max-w-4xl rounded-2xl shadow-2xl border border-white/10 bg-slate-900/90 backdrop-blur-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2 transition-transform duration-300 transform scale-100">
             
-            <!-- Left Branding Panel -->
-            <div class="p-8 md:p-12 bg-black/40 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-white/10">
-                <div class="w-24 h-24 mb-4 overflow-hidden rounded-full border-2 border-white/20 bg-stone-800 flex items-center justify-center shadow-2xl">
+            <div class="p-8 md:p-12 bg-slate-950/40 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-white/10 relative overflow-hidden">
+                <div class="absolute -right-16 -top-16 w-48 h-48 bg-white/2 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="w-28 h-28 mb-5 overflow-hidden rounded-full border-2 border-white/20 bg-slate-800 flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-300">
                     <img src="churchlogo.png.jpg" alt="NEC Logo" 
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" 
                          class="w-full h-full object-cover">
-                    <span class="hidden text-3xl">⛪</span>
+                    <span class="hidden text-4xl">⛪</span>
                 </div>
-                <h2 class="text-3xl font-medium text-stone-100 tracking-wide italic">
+                <h2 class="text-3xl font-bold text-white tracking-wide italic">
                     NEC Admin Portal
                 </h2>
-                <p class="text-xs text-stone-400 tracking-widest uppercase mt-2">
+                <p class="text-xs text-slate-400 tracking-widest uppercase mt-2 font-sans font-semibold">
                     Nasug-ong Evangelical Church
                 </p>
-                <div class="w-16 h-[1px] bg-stone-600 mt-4"></div>
+                <div class="w-16 h-[2px] bg-blue-500/50 mt-4 rounded-full"></div>
             </div>
 
-            <!-- Right Controls Panel -->
-            <div class="p-8 md:p-12 flex flex-col justify-center gap-5">
-                <h3 class="text-xl font-bold text-stone-200 mb-1">Account Authentication</h3>
+            <div class="p-8 md:p-12 flex flex-col justify-center gap-5 bg-slate-900/40">
+                <div>
+                    <h3 class="text-2xl font-bold text-white tracking-tight">Account Authentication</h3>
+                    <p class="text-sm text-slate-400 mt-1 font-sans">Provide credentials to access administrative systems.</p>
+                </div>
                 
-                <div class="flex flex-col gap-4">
-                    <input type="email" id="login-email" placeholder="Admin Email Address" 
-                           class="w-full p-3.5 border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 bg-white/5 text-stone-100 placeholder-stone-400 text-base">
+                <div class="flex flex-col gap-4 mt-2">
+                    <div class="relative">
+                        <input type="email" id="login-email" placeholder="Admin Email Address" 
+                               class="w-full p-3.5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 bg-slate-950/50 text-white placeholder-slate-500 text-base transition-all duration-200">
+                    </div>
                     
-                    <input type="password" id="login-password" placeholder="Account Password" 
-                           class="w-full p-3.5 border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 bg-white/5 text-stone-100 placeholder-stone-400 text-base">
+                    <div class="relative">
+                        <input type="password" id="login-password" placeholder="Account Password" 
+                               class="w-full p-3.5 border border-white/10 rounded-xl focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 bg-slate-950/50 text-white placeholder-slate-500 text-base transition-all duration-200">
+                    </div>
                     
-                    <button onclick="login()" class="w-full bg-stone-100 hover:bg-stone-200 text-stone-950 p-3.5 rounded-lg font-bold transition-all cursor-pointer text-sm uppercase tracking-wider shadow-md mt-2">
+                    <button onclick="login()" class="w-full bg-white hover:bg-slate-100 text-slate-950 p-3.5 rounded-xl font-bold transition-all duration-200 cursor-pointer text-sm uppercase tracking-wider shadow-lg active:scale-[0.99] mt-2 font-sans">
                         Sign In As Admin
                     </button>
                 </div>
 
                 <div class="border-t border-white/10 pt-4 mt-2">
-                    <button onclick="toggleViewMode(true)" class="w-full text-xs font-bold text-stone-300 hover:text-white transition-colors cursor-pointer tracking-widest uppercase bg-white/5 hover:bg-white/10 border border-white/10 py-3 px-5 rounded-lg text-center block">
+                    <button onclick="toggleViewMode(true)" class="w-full text-xs font-bold text-slate-300 hover:text-white transition-all duration-200 cursor-pointer tracking-widest uppercase bg-white/5 hover:bg-white/10 border border-white/10 py-3.5 px-5 rounded-xl text-center block font-sans active:scale-[0.99]">
                         View As Member (Read-Only) ↗
                     </button>
                 </div>
@@ -221,61 +208,56 @@
         </div>
     </div>
 
-    <!-- MAIN PORTAL SYSTEM -->
     <div id="app-container" class="min-h-screen flex hidden bg-cover bg-center bg-no-repeat relative bg-fixed" style="background-image: url('churchlogo.png.jpg');">
-        <div class="absolute inset-0 bg-slate-950/60 pointer-events-none"></div>
+        <div class="absolute inset-0 bg-slate-950/75 backdrop-blur-sm pointer-events-none"></div>
 
-        <!-- SIDEBAR NAVIGATION -->
-        <aside class="w-68 glass-sidebar text-stone-200 flex flex-col justify-between p-6 shadow-2xl z-20">
+        <aside class="w-72 glass-sidebar text-slate-200 flex flex-col justify-between p-6 shadow-2xl z-20 shrink-0">
             <div>
                 <div class="flex flex-col items-center text-center border-b border-white/10 pb-6 mb-6">
-                    <div class="w-14 h-14 overflow-hidden rounded-full border border-white/20 bg-white/5 p-0.5 flex items-center justify-center mb-2 shadow-inner">
+                    <div class="w-16 h-16 overflow-hidden rounded-full border border-white/20 bg-slate-800/50 p-0.5 flex items-center justify-center mb-3 shadow-xl">
                         <img src="churchlogo.png.jpg" alt="NEC Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" class="w-full h-full object-cover rounded-full">
-                        <span class="hidden text-xl">⛪</span>
+                        <span class="hidden text-2xl">⛪</span>
                     </div>
                     <h1 class="text-xl font-bold tracking-wider text-white">NEC PORTAL</h1>
-                    <p class="text-[10px] text-stone-400 font-bold tracking-widest uppercase mt-0.5">Nec Youth Management</p>
+                    <p class="text-[10px] text-blue-400 font-bold tracking-widest uppercase mt-1 font-sans">Nec Youth Management</p>
                 </div>
-                <nav class="space-y-1">
-                    <button onclick="switchTab('announcements')" class="w-full text-left p-3 hover:bg-white/5 rounded-lg flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-stone-300 hover:text-white">📢 Announcements</button>
-                    <button onclick="switchTab('schedule')" class="w-full text-left p-3 hover:bg-white/5 rounded-lg flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-stone-300 hover:text-white">📅 Weekly Line-Up</button>
-                    <button onclick="switchTab('officers-list')" class="w-full text-left p-3 hover:bg-white/5 rounded-lg flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-stone-300 hover:text-white">🖼️ Church Officers</button>
-                    <button onclick="switchTab('officers-meetings')" class="w-full text-left p-3 hover:bg-white/5 rounded-lg flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-stone-300 hover:text-white">👔 Meetings & Plans</button>
-                    <button onclick="switchTab('piso-day')" class="w-full text-left p-3 hover:bg-white/5 rounded-lg flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-stone-300 hover:text-white">🪙 Piso A Day</button>
-                    <button onclick="switchTab('polls')" class="w-full text-left p-3 hover:bg-white/5 rounded-lg flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-stone-300 hover:text-white">📊 Event Polls</button>
-                    <button onclick="switchTab('funds')" class="w-full text-left p-3 hover:bg-white/5 rounded-lg flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-stone-300 hover:text-white">💰 Church Funds</button>
+                <nav class="space-y-1.5 font-sans">
+                    <button onclick="switchTab('announcements')" class="tab-btn w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-slate-300 hover:text-white border border-transparent hover:border-white/5">📢 Announcements</button>
+                    <button onclick="switchTab('schedule')" class="tab-btn w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-slate-300 hover:text-white border border-transparent hover:border-white/5">📅 Weekly Line-Up</button>
+                    <button onclick="switchTab('officers-list')" class="tab-btn w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-slate-300 hover:text-white border border-transparent hover:border-white/5">🖼️ Church Officers</button>
+                    <button onclick="switchTab('officers-meetings')" class="tab-btn w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-slate-300 hover:text-white border border-transparent hover:border-white/5">👔 Meetings & Plans</button>
+                    <button onclick="switchTab('piso-day')" class="tab-btn w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-slate-300 hover:text-white border border-transparent hover:border-white/5">🪙 Piso A Day</button>
+                    <button onclick="switchTab('polls')" class="tab-btn w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-slate-300 hover:text-white border border-transparent hover:border-white/5">📊 Event Polls</button>
+                    <button onclick="switchTab('funds')" class="tab-btn w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-sm font-medium transition-all text-slate-300 hover:text-white border border-transparent hover:border-white/5">💰 Church Funds</button>
                 </nav>
             </div>
-            <div class="border-t border-white/10 pt-4">
-                <span id="user-role-badge" class="block text-[10px] bg-white/5 border border-white/10 py-2 px-3 rounded-md text-center mb-2 font-bold tracking-widest text-stone-400 uppercase">Guest Mode</span>
-                <button onclick="logout()" class="w-full bg-stone-800 hover:bg-stone-700 text-stone-200 py-2.5 px-4 rounded-lg text-xs font-bold transition-colors cursor-pointer border border-white/10">Logout System</button>
+            <div class="border-t border-white/10 pt-4 font-sans">
+                <span id="user-role-badge" class="block text-[10px] bg-blue-500/10 border border-blue-500/20 text-blue-400 py-2.5 px-3 rounded-lg text-center mb-3 font-bold tracking-widest uppercase">Guest Mode</span>
+                <button onclick="logout()" class="w-full bg-slate-900 hover:bg-slate-800 text-slate-200 py-3 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer border border-white/10 active:scale-[0.98]">Logout System</button>
             </div>
         </aside>
 
-        <!-- MAIN CONTENT AREA -->
-        <main class="flex-1 p-8 overflow-y-auto z-10">
+        <main class="flex-1 p-6 md:p-10 overflow-y-auto z-10 transition-all duration-300">
             
-            <!-- TAB: ANNOUNCEMENTS -->
-            <section id="tab-announcements" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl">
-                <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+            <section id="tab-announcements" class="tab-content bg-section-glass p-6 md:p-8 rounded-2xl shadow-2xl">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/10 pb-5">
                     <div>
-                        <h2 class="text-3xl font-bold text-stone-100 tracking-tight">📢 Church Announcements</h2>
-                        <p class="text-sm text-stone-400 italic mt-0.5">Important news, updates, and notices for the congregation.</p>
+                        <h2 class="text-3xl font-bold text-white tracking-tight">📢 Church Announcements</h2>
+                        <p class="text-sm text-slate-400 italic mt-1">Important news, updates, and notices for the congregation.</p>
                     </div>
-                    <button class="admin-only bg-stone-100 text-stone-950 px-5 py-2.5 rounded-lg font-bold hidden hover:bg-stone-200 transition-colors cursor-pointer text-sm shadow-md" onclick="openModal('announcement')">+ New Announcement</button>
+                    <button class="admin-only bg-white text-slate-950 px-5 py-2.5 rounded-xl font-bold hidden hover:bg-slate-100 transition-all cursor-pointer text-sm shadow-md active:scale-[0.98] font-sans shrink-0" onclick="openModal('announcement')">+ New Announcement</button>
                 </div>
                 <div id="announcements-list" class="grid grid-cols-1 gap-6"></div>
             </section>
 
-            <!-- TAB: MONTHLY SCHEDULE LINE-UP -->
-            <section id="tab-schedule" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl hidden">
-                <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+            <section id="tab-schedule" class="tab-content bg-section-glass p-6 md:p-8 rounded-2xl shadow-2xl hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/10 pb-5">
                     <div>
-                        <h2 class="text-3xl font-bold text-stone-100 tracking-tight">📅 Praise Team Weekly Line-Up</h2>
-                        <p class="text-sm text-stone-400 italic mt-0.5">Weekly assignments, layout templates, and roles for the Praise and Worship team.</p>
+                        <h2 class="text-3xl font-bold text-white tracking-tight">📅 Praise Team Weekly Line-Up</h2>
+                        <p class="text-sm text-slate-400 italic mt-1">Weekly assignments, layout templates, and roles for the Praise and Worship team.</p>
                     </div>
-                    <div class="flex gap-2">
-                        <select id="sunday-filter" onchange="fetchData('schedule')" class="p-2.5 px-4 border border-white/10 rounded-lg bg-stone-800 text-stone-100 text-sm font-bold focus:outline-none shadow-sm">
+                    <div class="shrink-0">
+                        <select id="sunday-filter" onchange="fetchData('schedule')" class="p-2.5 px-4 border border-white/10 rounded-xl bg-slate-900 text-white text-sm font-bold focus:outline-none focus:border-white/30 shadow-md font-sans">
                             <option value="1st Sunday">1st Sunday</option>
                             <option value="2nd Sunday">2nd Sunday</option>
                             <option value="3rd Sunday">3rd Sunday</option>
@@ -284,90 +266,85 @@
                         </select>
                     </div>
                 </div>
-                <div id="schedule-container" class="p-4"></div>
+                <div id="schedule-container" class="p-2"></div>
             </section>
 
-            <!-- TAB: CHURCH OFFICERS LIST -->
-            <section id="tab-officers-list" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl hidden">
-                <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+            <section id="tab-officers-list" class="tab-content bg-section-glass p-6 md:p-8 rounded-2xl shadow-2xl hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/10 pb-5">
                     <div>
-                        <h2 class="text-3xl font-bold text-stone-100 tracking-tight">🖼️ Church Representatives</h2>
-                        <p class="text-sm text-stone-400 italic mt-0.5">Leaders, officers, and administrators of various church ministries.</p>
+                        <h2 class="text-3xl font-bold text-white tracking-tight">🖼️ Church Representatives</h2>
+                        <p class="text-sm text-slate-400 italic mt-1">Leaders, officers, and administrators of various church ministries.</p>
                     </div>
-                    <button class="admin-only bg-stone-100 text-stone-950 px-5 py-2.5 rounded-lg font-bold hidden hover:bg-stone-200 transition-colors cursor-pointer text-sm shadow-md" onclick="openModal('officer-rep')">+ Add Officer</button>
+                    <button class="admin-only bg-white text-slate-950 px-5 py-2.5 rounded-xl font-bold hidden hover:bg-slate-100 transition-all cursor-pointer text-sm shadow-md active:scale-[0.98] font-sans shrink-0" onclick="openModal('officer-rep')">+ Add Officer</button>
                 </div>
-                <div id="officers-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"></div>
+                <div id="officers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
             </section>
 
-            <!-- TAB: OFFICERS MEETINGS & PLANS -->
-            <section id="tab-officers-meetings" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl hidden">
-                <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+            <section id="tab-officers-meetings" class="tab-content bg-section-glass p-6 md:p-8 rounded-2xl shadow-2xl hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/10 pb-5">
                     <div>
-                        <h2 class="text-3xl font-bold text-stone-100 tracking-tight">👔 Meetings & Plans</h2>
-                        <p class="text-sm text-stone-400 italic mt-0.5">Upcoming plans, meeting agendas, schedules, and official timelines.</p>
+                        <h2 class="text-3xl font-bold text-white tracking-tight">👔 Meetings & Plans</h2>
+                        <p class="text-sm text-slate-400 italic mt-1">Upcoming plans, meeting agendas, schedules, and official timelines.</p>
                     </div>
-                    <button class="admin-only bg-stone-100 text-stone-950 px-5 py-2.5 rounded-lg font-bold hidden hover:bg-stone-200 transition-colors cursor-pointer text-sm shadow-md" onclick="openModal('meeting')">+ Add Plan / Meeting</button>
+                    <button class="admin-only bg-white text-slate-950 px-5 py-2.5 rounded-xl font-bold hidden hover:bg-slate-100 transition-all cursor-pointer text-sm shadow-md active:scale-[0.98] font-sans shrink-0" onclick="openModal('meeting')">+ Add Plan / Meeting</button>
                 </div>
-                <div id="meetings-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                <div id="meetings-list" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
             </section>
 
-            <!-- TAB: PISO A DAY -->
-            <section id="tab-piso-day" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl hidden">
-                <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+            <section id="tab-piso-day" class="tab-content bg-section-glass p-6 md:p-8 rounded-2xl shadow-2xl hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/10 pb-5">
                     <div>
-                        <h2 class="text-3xl font-bold text-stone-100 tracking-tight">🪙 Piso a Day Tracker</h2>
-                        <p class="text-sm text-stone-400 italic mt-0.5">Financial logging for member contributions toward the Piso a Day project.</p>
+                        <h2 class="text-3xl font-bold text-white tracking-tight">🪙 Piso a Day Tracker</h2>
+                        <p class="text-sm text-slate-400 italic mt-1">Financial logging for member contributions toward the Piso a Day project.</p>
                     </div>
-                    <button class="admin-only bg-stone-100 text-stone-950 px-5 py-2.5 rounded-lg font-bold hidden hover:bg-stone-200 transition-colors cursor-pointer text-sm shadow-md" onclick="openModal('piso')">+ Add New Record</button>
+                    <button class="admin-only bg-white text-slate-950 px-5 py-2.5 rounded-xl font-bold hidden hover:bg-slate-100 transition-all cursor-pointer text-sm shadow-md active:scale-[0.98] font-sans shrink-0" onclick="openModal('piso')">+ Add New Record</button>
                 </div>
-                <div class="overflow-hidden rounded-xl border border-white/10 shadow-xl bg-stone-950/80">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-stone-950 text-stone-200 text-xs font-bold uppercase tracking-wider border-b border-white/15">
+                <div class="overflow-x-auto rounded-xl border border-white/10 shadow-xl bg-slate-950/60 backdrop-blur-md">
+                    <table class="w-full text-left border-collapse min-w-[600px]">
+                        <thead class="bg-slate-950 text-slate-300 text-xs font-bold uppercase tracking-wider border-b border-white/10 font-sans">
                             <tr>
                                 <th class="p-4 pl-6">Member Name</th>
                                 <th class="p-4">Amount</th>
                                 <th class="p-4">Date Recorded</th>
-                                <th class="admin-only p-4 text-center hidden">Actions</th>
+                                <th class="admin-only p-4 text-center hidden w-40">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="piso-table-body" class="divide-y divide-white/5 bg-stone-900/40"></tbody>
+                        <tbody id="piso-table-body" class="divide-y divide-white/5"></tbody>
                     </table>
                 </div>
             </section>
 
-            <!-- TAB: EVENT SUGGESTIONS & VOTE POLLS -->
-            <section id="tab-polls" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl hidden">
-                <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+            <section id="tab-polls" class="tab-content bg-section-glass p-6 md:p-8 rounded-2xl shadow-2xl hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/10 pb-5">
                     <div>
-                        <h2 class="text-3xl font-bold text-stone-100 tracking-tight">📊 Event Suggestions & Voting</h2>
-                        <p class="text-sm text-stone-400 italic mt-0.5">Vote or suggest new activities and upcoming events for the community.</p>
+                        <h2 class="text-3xl font-bold text-white tracking-tight">📊 Event Suggestions & Voting</h2>
+                        <p class="text-sm text-slate-400 italic mt-1">Vote or suggest new activities and upcoming events for the community.</p>
                     </div>
-                    <button class="admin-only bg-stone-100 text-stone-950 px-5 py-2.5 rounded-lg font-bold hidden hover:bg-stone-200 transition-colors cursor-pointer text-sm shadow-md" onclick="openModal('poll')">+ Suggest New Event</button>
+                    <button class="admin-only bg-white text-slate-950 px-5 py-2.5 rounded-xl font-bold hidden hover:bg-slate-100 transition-all cursor-pointer text-sm shadow-md active:scale-[0.98] font-sans shrink-0" onclick="openModal('poll')">+ Suggest New Event</button>
                 </div>
-                <div id="polls-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                <div id="polls-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </section>
 
-            <!-- TAB: CHURCH FUNDS -->
-            <section id="tab-funds" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl hidden">
-                <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+            <section id="tab-funds" class="tab-content bg-section-glass p-6 md:p-8 rounded-2xl shadow-2xl hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/10 pb-5">
                     <div>
-                        <h2 class="text-3xl font-bold text-stone-100 tracking-tight">💰 Church Financial Transparency</h2>
-                        <p class="text-sm text-stone-400 italic mt-0.5">Real-time ledger report for Offerings, Tithes, and specialized donations.</p>
+                        <h2 class="text-3xl font-bold text-white tracking-tight">💰 Church Financial Transparency</h2>
+                        <p class="text-sm text-slate-400 italic mt-1">Real-time ledger report for Offerings, Tithes, and specialized donations.</p>
                     </div>
-                    <button class="admin-only bg-stone-100 text-stone-950 px-5 py-2.5 rounded-lg font-bold hidden hover:bg-stone-200 transition-colors cursor-pointer text-sm shadow-md" onclick="openModal('fund')">+ Record Transaction</button>
+                    <button class="admin-only bg-white text-slate-950 px-5 py-2.5 rounded-xl font-bold hidden hover:bg-slate-100 transition-all cursor-pointer text-sm shadow-md active:scale-[0.98] font-sans shrink-0" onclick="openModal('fund')">+ Record Transaction</button>
                 </div>
-                <div class="overflow-hidden rounded-xl border border-white/10 shadow-xl bg-stone-950/80">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-stone-950 text-stone-200 text-xs font-bold uppercase tracking-wider border-b border-white/15">
+                <div class="overflow-x-auto rounded-xl border border-white/10 shadow-xl bg-slate-950/60 backdrop-blur-md">
+                    <table class="w-full text-left border-collapse min-w-[750px]">
+                        <thead class="bg-slate-950 text-slate-300 text-xs font-bold uppercase tracking-wider border-b border-white/10 font-sans">
                             <tr>
                                 <th class="p-4 pl-6">Transaction Type</th>
                                 <th class="p-4">Amount Given</th>
                                 <th class="p-4">Date</th>
                                 <th class="p-4">Remarks / Details</th>
-                                <th class="admin-only p-4 text-center hidden">Actions</th>
+                                <th class="admin-only p-4 text-center hidden w-40">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="funds-table-body" class="divide-y divide-white/5 bg-stone-900/40"></tbody>
+                        <tbody id="funds-table-body" class="divide-y divide-white/5"></tbody>
                     </table>
                 </div>
             </section>
@@ -375,14 +352,13 @@
         </main>
     </div>
 
-    <!-- MODAL -->
-    <div id="generic-modal" class="hidden fixed inset-0 bg-slate-950/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-        <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl border border-stone-200">
-            <h3 id="modal-title" class="text-2xl font-bold mb-4 text-stone-900 tracking-tight">Add Entry</h3>
-            <div id="modal-fields" class="space-y-4"></div>
-            <div class="flex justify-end gap-3 mt-6 border-t border-stone-100 pt-4">
-                <button onclick="closeModal()" class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-4 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider cursor-pointer">Cancel</button>
-                <button id="modal-save-btn" class="bg-stone-900 hover:bg-stone-800 text-white px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider cursor-pointer shadow-md">Save Record</button>
+    <div id="generic-modal" class="hidden fixed inset-0 bg-slate-950/80 flex items-center justify-center p-4 z-50 backdrop-blur-md transition-all duration-300">
+        <div class="bg-slate-900 rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto">
+            <h3 id="modal-title" class="text-2xl font-bold mb-5 text-white tracking-tight">Add Entry</h3>
+            <div id="modal-fields" class="space-y-4 font-sans text-slate-200"></div>
+            <div class="flex justify-end gap-3 mt-6 border-t border-white/10 pt-4 font-sans">
+                <button onclick="closeModal()" class="bg-white/5 hover:bg-white/10 text-slate-300 px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer transition-all active:scale-[0.97]">Cancel</button>
+                <button id="modal-save-btn" class="bg-white hover:bg-slate-100 text-slate-950 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all active:scale-[0.97]">Save Record</button>
             </div>
         </div>
     </div>
