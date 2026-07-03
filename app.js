@@ -1,5 +1,5 @@
 // CORE CONFIGURATION PARAMETERS [cite: 381]
-        const SUPABASE_URL = "https://nbcuzewrgdfdaiowbovc.supabase.co"; // [cite: 381]
+        const SUPABASE_URL = "https://nbcuzewrgdfdaiowbovc.supabase.co/rest/v1/; // [cite: 381]
         const SUPABASE_ANON_KEY = "sb_publishable_xVZvbjf4t0vRSZCWluJlag_VAURlr6h"; // [cite: 381]
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // [cite: 381]
         
