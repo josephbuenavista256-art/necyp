@@ -1,627 +1,536 @@
-// PASTE YOUR ACTUAL REVEALED SUPABASE KEY INSIDE THE HOOK BELOW
-        const SUPABASE_URL = "https://nbcuzewrgdfdaiowbovc.supabase.co"; 
-        const SUPABASE_ANON_KEY = "sb_publishable_xVZvbjf4t0vRSZCWluJlag_VAURlr6h"; 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
+// ==========================================
+// CONFIGURATION & INITIALIZATION
+// ==========================================
+const SUPABASE_URL = "https://nbcuzewrgfdaiowbovc.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_xVZvbjf4t0vRSZCWluJlag_VAURlr6h"; // Siguraduhing tama ang iyong actual anon key dito
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let isAdmin = false;
+
+// ==========================================
+// CORE NAVIGATION & PERMISSIONS
+// ==========================================
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    const targetTab = document.getElementById(`tab-${tabName}`);
+    if (targetTab) {
+        targetTab.classList.remove('hidden');
+    }
+    fetchData(tabName);
+}
+
+function toggleViewMode(asGuest) {
+    document.getElementById('auth-container').classList.add('hidden');
+    document.getElementById('app-container').classList.remove('hidden');
+    isAdmin = !asGuest;
+    
+    document.getElementById('user-role-badge').innerText = isAdmin ? "Admin Mode Active" : "Member View (Read-Only)";
+    
+    applyPermissions();
+    switchTab('announcements');
+}
+
+function applyPermissions() {
+    document.querySelectorAll('.admin-only').forEach(el => {
+        if (isAdmin) {
+            el.classList.remove('hidden');
+        } else {
+            el.classList.add('hidden');
+        }
+    });
+}
+
+// ==========================================
+// AUTHENTICATION SYSTEM
+// ==========================================
+async function login() {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    
+    if (!email || !password) {
+        alert("Please fill in both email and password fields.");
+        return;
+    }
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+        alert("Invalid login details: " + error.message);
+    } else {
+        toggleViewMode(false);
+    }
+}
+
+function logout() {
+    supabaseClient.auth.signOut();
+    isAdmin = false;
+    document.getElementById('app-container').classList.add('hidden');
+    document.getElementById('auth-container').classList.remove('hidden');
+    
+    // Clear inputs
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
+}
+
+// ==========================================
+// FETCH DATA & RENDERER ENGINE
+// ==========================================
+async function fetchData(tab) {
+    // 1. ANNOUNCEMENTS
+    if (tab === 'announcements') {
+        let { data } = await supabaseClient.from('announcements').select('*').order('created_at', { ascending: false });
+        let container = document.getElementById('announcements-list');
         
-        let isAdmin = false; 
-        let currentActiveTabName = 'announcements';
-        let isGlobalThemeDarkMode = false;
-
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `p-3.5 rounded-xl text-xs font-medium shadow-xl border flex items-center justify-between gap-3 transform translate-x-5 opacity-0 transition-all duration-300 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800`;
-            
-            let colorIndicator = 'text-green-500';
-            if (type === 'error') colorIndicator = 'text-red-500';
-            if (type === 'warning') colorIndicator = 'text-amber-500';
-            
-            toast.innerHTML = `
-                <div class="flex items-center gap-2.5">
-                    <span class="${colorIndicator} font-bold text-sm">●</span>
-                    <span>${message}</span>
+        container.innerHTML = data?.map(item => `
+            <div class="bg-white p-4 rounded shadow flex justify-between items-center border-l-4 border-blue-600">
+                <div>
+                    <h3 class="text-xl font-bold text-blue-900">${item.title}</h3>
+                    <p class="text-gray-600 mt-1">${item.content}</p>
                 </div>
-                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold">✕</button>
+                <div class="admin-only flex gap-4 ml-auto">
+                    <button onclick="openEditModal('announcement', ${item.id}, '${item.title}', '${item.content}')" class="text-yellow-600 font-semibold text-sm hover:underline">Edit</button>
+                    <button onclick="deleteData('announcements', ${item.id})" class="text-red-600 font-semibold text-sm hover:underline">Remove</button>
+                </div>
+            </div>`).join('') || '<p class="text-gray-500">No announcements.</p>';
+    }
+
+    // 2. SEPARATED SUNDAY SCHEDULES
+    if (tab === 'schedule') {
+        const selectedSunday = document.getElementById('sunday-filter').value;
+        let { data } = await supabaseClient.from('monthly_schedules').select('*').eq('sunday_week', selectedSunday);
+        let container = document.getElementById('schedule-container');
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <p class="text-gray-500">No layout assigned for <b>${selectedSunday}</b>.</p>
+                <button onclick="setupCustomSunday('${selectedSunday}')" class="admin-only mt-4 bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 font-semibold transition-all cursor-pointer">+ Create a Template for this Week</button>
             `;
-            container.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.classList.remove('translate-x-5', 'opacity-0');
-            }, 10);
-            
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-x-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 4500);
+            applyPermissions();
+            return;
         }
 
-        function togglePasswordVisibility(fieldId) {
-            const field = document.getElementById(fieldId);
-            field.type = field.type === 'password' ? 'text' : 'password';
-        }
+        let sched = data[0];
+        container.innerHTML = `
+            <div class="flex justify-between items-start border-b pb-4 mb-4">
+                <div>
+                    <h3 class="text-2xl font-bold text-blue-800">${sched.sunday_week} Layout List</h3>
+                    <blockquote class="bg-blue-50 p-3 italic text-gray-700 rounded my-2 border-l-2 border-blue-400"><b>Verse:</b> ${sched.verse || ''}</blockquote>
+                </div>
+                <button onclick="deleteData('monthly_schedules', ${sched.id})" class="admin-only bg-red-600 text-white px-4 py-2 rounded text-xs font-semibold hover:bg-red-700 transition-all cursor-pointer">Remove Layout</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-800 bg-gray-50 p-4 rounded mb-4">
+                <p><b>🎤 Worship Leader:</b> ${sched.worship_leader || 'Unassigned'}</p>
+                <p><b>🎶 Back-up Singers:</b> ${sched.backup_singers || 'Unassigned'}</p>
+                <p><b>🎸 Guitar:</b> ${sched.guitar || 'Unassigned'}</p>
+                <p><b>🎸 Bass:</b> ${sched.bass || 'Unassigned'}</p>
+                <p><b>🥁 Drummer:</b> ${sched.drummer || 'Unassigned'}</p>
+                <p><b>🎹 Keyboard:</b> ${sched.keyboard || 'Unassigned'}</p>
+                <p><b>💻 Multimedia/Lyrics Operator:</b> ${sched.multimedia || 'Unassigned'}</p>
+            </div>
+            <button onclick="openEditScheduleModal(${sched.id})" class="admin-only mt-2 bg-yellow-500 text-white px-5 py-2.5 rounded text-sm font-bold shadow hover:bg-yellow-600 transition-all cursor-pointer">✏️ Edit Line-up Names</button>
+        `;
+    }
 
-        function switchTab(tabName) {
-            currentActiveTabName = tabName;
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden')); 
-            const target = document.getElementById(`tab-${tabName}`);
-            if (target) target.classList.remove('hidden'); 
-            
-            document.querySelectorAll('.nav-link').forEach(el => {
-                if (el.getAttribute('data-tab') === tabName) {
-                    el.classList.add('bg-blue-600/10', 'text-blue-500', 'dark:bg-blue-500/10');
-                    el.classList.remove('text-slate-300');
-                } else {
-                    el.classList.remove('bg-blue-600/10', 'text-blue-500', 'dark:bg-blue-500/10');
-                    el.classList.add('text-slate-300');
-                }
-            });
+    // 3. CHURCH OFFICERS
+    if (tab === 'officers-list') {
+        let { data } = await supabaseClient.from('church_officers').select('*').order('created_at', { ascending: true });
+        let container = document.getElementById('officers-grid');
+        
+        container.innerHTML = data?.map(item => `
+            <div class="bg-white p-4 rounded-lg shadow-md flex flex-col items-center text-center relative border border-gray-200">
+                <img src="${item.image_url || 'https://via.placeholder.com/200?text=2x2+Photo'}" class="w-32 h-32 object-cover border-2 border-blue-900 rounded mb-3" alt="Officer 2x2">
+                <h3 class="font-bold text-lg text-gray-900">${item.name}</h3>
+                <p class="text-blue-700 font-semibold text-sm">${item.position}</p>
+                <div class="admin-only mt-4 flex gap-4 justify-center w-full border-t border-gray-100 pt-2">
+                    <button onclick="openEditOfficerModal(${item.id}, '${item.name}', '${item.position}', '${item.image_url}')" class="text-xs text-yellow-600 font-bold hover:underline">Edit</button>
+                    <button onclick="deleteData('church_officers', ${item.id})" class="text-xs text-red-600 font-bold hover:underline">Remove</button>
+                </div>
+            </div>`).join('') || '<p class="text-gray-500">No officers registered.</p>';
+    }
 
-            fetchData(tabName); 
-        }
+    // 4. OFFICERS MEETINGS & PLANS
+    if (tab === 'officers-meetings') {
+        let { data } = await supabaseClient.from('officer_plans').select('*').order('meeting_date', { ascending: false });
+        let container = document.getElementById('meetings-list');
+        
+        container.innerHTML = data?.map(item => `
+            <div class="glass-panel p-4 rounded-xl shadow border border-white/40 flex justify-between items-center w-full bg-white">
+                <div>
+                    <h3 class="text-lg font-bold text-blue-900">${item.title}</h3>
+                    <p class="text-sm text-gray-500 font-semibold mt-1">📅 Date: ${item.meeting_date}</p>
+                    <p class="text-gray-700 mt-2">${item.description || ''}</p>
+                </div>
+                <div class="admin-only flex gap-4 ml-auto">
+                    <button onclick="openEditMeetingModal(${item.id}, '${item.title}', '${item.meeting_date}', '${item.description}')" class="text-yellow-600 font-bold text-sm hover:underline">Edit</button>
+                    <button onclick="deleteData('officer_plans', ${item.id})" class="text-red-500 font-bold text-sm hover:underline">Remove</button>
+                </div>
+            </div>`).join('') || '<p class="text-gray-500">No scheduled meetings.</p>';
+    }
 
-        function toggleThemeMode() {
-            isGlobalThemeDarkMode = !isGlobalThemeDarkMode;
-            const rootHtml = document.documentElement;
-            const icon = document.getElementById('theme-btn-icon');
-            
-            if (isGlobalThemeDarkMode) {
-                rootHtml.classList.add('dark-mode');
-                icon.innerText = '☀️';
-            } else {
-                rootHtml.classList.remove('dark-mode');
-                icon.innerText = '🌙';
-            }
-        }
-
-        function toggleViewMode(asGuest) {
-            document.getElementById('auth-container').classList.add('hidden'); 
-            document.getElementById('app-container').classList.remove('hidden'); 
-            isAdmin = !asGuest; 
-            
-            document.getElementById('user-role-badge').innerText = isAdmin ? "Admin Mode Active" : "Member View (Read-Only)"; 
-            document.getElementById('avatar-display').innerText = isAdmin ? "A" : "G";
-            document.getElementById('header-user-title').innerText = isAdmin ? "Administrator Node" : "Visitor Instance";
-            document.getElementById('header-user-subtitle').innerText = isAdmin ? "Full Structural Access" : "Read-only Session";
-
-            applyPermissions(); 
-            switchTab('announcements'); 
-        }
-
-        function applyPermissions() {
-            document.querySelectorAll('.admin-only').forEach(el => {
-                if (isAdmin) {
-                    el.classList.remove('hidden'); 
-                } else {
-                    el.classList.add('hidden'); 
-                }
-            });
-        }
-
-        async function login() {
-            const email = document.getElementById('login-email').value; 
-            const password = document.getElementById('login-password').value; 
-            const loginBtn = document.getElementById('login-btn');
-            
-            if(!email || !password) {
-                showToast("Please provide valid authentication credentials.", "warning");
-                return;
-            }
-
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = `<span>Connecting Node Instance...</span>`;
-
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); 
-            
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = `<span>Sign In As Admin</span>`;
-
-            if (error) {
-                showToast("Authentication Failed: " + error.message, "error"); 
-            } else {
-                showToast("Ecclesiastical credential verified successfully.", "success");
-                toggleViewMode(false); 
-            }
-        }
-
-        function logout() {
-            supabaseClient.auth.signOut(); 
-            isAdmin = false; 
-            showToast("Session instances purged successfully.");
-            document.getElementById('app-container').classList.add('hidden'); 
-            document.getElementById('auth-container').classList.remove('hidden'); 
-        }
-
-        async function fetchData(tab) {
-            const loader = document.getElementById('tab-skeleton-loader');
-            loader.classList.remove('hidden');
-            
-            try {
-                if (tab === 'announcements') {
-                    let { data } = await supabaseClient.from('announcements').select('*').order('created_at', { ascending: false }); 
-                    let container = document.getElementById('announcements-list'); 
-                    
-                    container.innerHTML = data?.map(item => `
-                        <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 card-hover-lift flex justify-between items-start gap-4">
-                            <div class="space-y-1">
-                                <h3 class="text-sm font-bold text-slate-900 dark:text-white">${item.title}</h3>
-                                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">${item.content}</p>
-                            </div>
-                            <div class="admin-only flex gap-2 shrink-0">
-                                <button onclick="openEditModal('announcement', ${item.id}, '${item.title}', '${item.content}')" class="text-[11px] font-bold bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white p-1.5 px-3 rounded-lg transition-all">Edit</button>
-                                <button onclick="deleteData('announcements', ${item.id})" class="text-[11px] font-bold bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white p-1.5 px-3 rounded-lg transition-all">Remove</button>
-                            </div>
-                        </div>`).join('') || '<p class="text-xs text-slate-400 italic">No community updates deployed currently.</p>'; 
-                }
-
-                if (tab === 'schedule') {
-                    const selectedSunday = document.getElementById('sunday-filter').value; 
-                    let { data } = await supabaseClient.from('monthly_schedules').select('*').eq('sunday_week', selectedSunday); 
-                    let container = document.getElementById('schedule-container'); 
-                    
-                    if (!data || data.length === 0) { 
-                        container.innerHTML = `
-                            <div class="p-8 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 text-center space-y-3 bg-white dark:bg-slate-900">
-                                <p class="text-xs text-slate-500">No organizational music workflow timeline assigned for <b>${selectedSunday}</b>.</p>
-                                <button onclick="setupCustomSunday('${selectedSunday}')" class="admin-only inline-flex bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-blue-500 transition-all cursor-pointer shadow-md">+ Generate Workflow Struct Template</button>
-                            </div>
-                        `;
-                        applyPermissions(); 
-                        loader.classList.add('hidden');
-                        return;
-                    }
-
-                    let sched = data[0]; 
-                    container.innerHTML = `
-                        <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-6">
-                            <div class="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
-                                <div class="space-y-1">
-                                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">${sched.sunday_week} Layout Metrics</h3>
-                                    <div class="text-xs italic text-blue-500 dark:text-blue-400 bg-blue-500/5 p-2.5 rounded-xl border border-blue-500/10"><b>Theological Theme Verse:</b> ${sched.verse}</div>
-                                </div>
-                                <button onclick="deleteData('monthly_schedules', ${sched.id})" class="admin-only bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer">Purge Layout</button>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
-                                <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900"><b>🎤 Worship Leader:</b> <span class="text-slate-600 dark:text-slate-400 ml-1">${sched.worship_leader || 'Unassigned'}</span></div>
-                                <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900"><b>🎶 Vocal Harmony Base:</b> <span class="text-slate-600 dark:text-slate-400 ml-1">${sched.backup_singers || 'Unassigned'}</span></div>
-                                <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900"><b>🎸 Lead Guitarist:</b> <span class="text-slate-600 dark:text-slate-400 ml-1">${sched.guitar || 'Unassigned'}</span></div>
-                                <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900"><b>🎸 Bass Core:</b> <span class="text-slate-600 dark:text-slate-400 ml-1">${sched.bass || 'Unassigned'}</span></div>
-                                <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900"><b>🥁 Rhythm Percussion:</b> <span class="text-slate-600 dark:text-slate-400 ml-1">${sched.drummer || 'Unassigned'}</span></div>
-                                <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900"><b>🎹 Synthesizer Keyboard:</b> <span class="text-slate-600 dark:text-slate-400 ml-1">${sched.keyboard || 'Unassigned'}</span></div>
-                                <div class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-900 sm:col-span-2 md:col-span-3"><b>💻 Multimedia Operations:</b> <span class="text-slate-600 dark:text-slate-400 ml-1">${sched.multimedia || 'Unassigned'}</span></div>
-                            </div>
-                            <button onclick="openEditScheduleModal(${sched.id})" class="admin-only w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm">✏️ Remap Dynamic Lineup Allocation Roles</button>
-                        </div>
-                    `;
-                }
-
-                if (tab === 'officers-list') {
-                    let { data } = await supabaseClient.from('church_officers').select('*').order('created_at', { ascending: true }); 
-                    let container = document.getElementById('officers-grid'); 
-                    
-                    container.innerHTML = data?.map(item => `
-                        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center card-hover-lift relative">
-                            <div class="w-24 h-24 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-950 mb-3 shadow-inner">
-                                <img src="${item.image_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150'}" class="w-full h-full object-cover" alt="Officer">
-                            </div>
-                            <h3 class="font-bold text-xs text-slate-900 dark:text-white tracking-tight">${item.name}</h3>
-                            <p class="text-[10px] text-blue-500 font-bold uppercase tracking-wider mt-0.5">${item.position}</p>
-                            
-                            <div class="admin-only mt-4 flex gap-2 justify-center w-full border-t border-slate-100 dark:border-slate-800 pt-3">
-                                <button onclick="openEditOfficerModal(${item.id}, '${item.name}', '${item.position}', '${item.image_url}')" class="text-[10px] font-bold text-amber-500 hover:underline">Modify</button>
-                                <button onclick="deleteData('church_officers', ${item.id})" class="text-[10px] font-bold text-red-500 hover:underline">Purge</button>
-                            </div>
-                        </div>`).join('') || '<p class="text-xs text-slate-400 italic">No execution officers populated currently.</p>'; 
-                }
-
-                if (tab === 'officers-meetings') {
-                    let { data } = await supabaseClient.from('officer_plans').select('*').order('meeting_date', { ascending: false }); 
-                    let container = document.getElementById('meetings-list'); 
-                    
-                    container.innerHTML = data?.map(item => `
-                        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 card-hover-lift flex justify-between items-start gap-4">
-                            <div class="space-y-1">
-                                <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">${item.title}</h3>
-                                <div class="text-[10px] font-semibold text-slate-400 flex items-center gap-1"><span>📅 Logged Agenda Boundary:</span> <span class="text-slate-600 dark:text-slate-300">${item.meeting_date}</span></div>
-                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">${item.description || 'No execution breakdown details deployed.'}</p>
-                            </div>
-                            <div class="admin-only flex gap-1.5 shrink-0">
-                                <button onclick="openEditMeetingModal(${item.id}, '${item.title}', '${item.meeting_date}', '${item.description}')" class="text-[10px] font-bold text-amber-500 bg-amber-500/5 hover:bg-amber-500 hover:text-white px-2 py-1 rounded-md transition-all">Edit</button>
-                                <button onclick="deleteData('officer_plans', ${item.id})" class="text-[10px] font-bold text-red-500 bg-red-500/5 hover:bg-red-500 hover:text-white px-2 py-1 rounded-md transition-all">Delete</button>
-                            </div>
-                        </div>`).join('') || '<p class="text-xs text-slate-400 italic">No planned executive metrics located.</p>';
-                }
-
-                if (tab === 'piso-day') {
-                    let { data } = await supabaseClient.from('piso_a_day').select('*').order('date_recorded', { ascending: false }); 
-                    document.getElementById('piso-table-body').innerHTML = data?.map(item => `
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors tabular-row-item">
-                            <td class="p-4 pl-6 font-medium text-slate-900 dark:text-white search-target-field">${item.member_name}</td>
-                            <td class="p-4 text-emerald-500 font-bold">₱${parseFloat(item.amount).toLocaleString()}</td>
-                            <td class="p-4 text-slate-400 font-mono">${item.date_recorded}</td>
-                            <td class="admin-only p-4 text-center">
-                                <div class="flex gap-2 justify-center">
-                                    <button onclick="openEditPisoModal(${item.id}, '${item.member_name}', ${item.amount}, '${item.date_recorded}')" class="text-[11px] bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white p-1 px-2.5 rounded-md transition-all font-semibold">Modify</button>
-                                    <button onclick="deleteData('piso_a_day', ${item.id})" class="text-[11px] bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white p-1 px-2.5 rounded-md transition-all font-semibold">Purge</button>
-                                </div>
-                            </td>
-                        </tr>`).join('') || '<tr><td colspan="4" class="p-6 text-center text-xs text-slate-400 italic">No microscopic ledger tracking inputs captured yet.</td></tr>'; 
-                }
-
-                if (tab === 'polls') {
-                    let { data } = await supabaseClient.from('event_polls').select('*').order('created_at', { ascending: false }); 
-                    let container = document.getElementById('polls-list'); 
-                    
-                    container.innerHTML = data?.map(item => `
-                        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between text-center card-hover-lift">
-                            <div class="space-y-1">
-                                <h3 class="text-xs font-bold text-slate-900 dark:text-white tracking-tight">${item.event_name}</h3>
-                                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">${item.description || 'No descriptive structural log context offered.'}</p>
-                            </div>
-                            <div class="my-4 bg-blue-500/5 rounded-xl border border-blue-500/10 p-3 flex items-center justify-between">
-                                <span class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Total Aggregated Votes</span>
-                                <span class="text-lg font-black text-blue-500 font-mono">${item.votes}</span>
-                            </div>
-                            <div class="space-y-2">
-                                <button onclick="voteEvent(${item.id}, ${item.votes})" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-xl text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-sm shadow-blue-600/10">👍 Cast Affinity Agreement / Affirmation</button>
-                                <div class="admin-only flex justify-center gap-3 border-t border-slate-100 dark:border-slate-800 pt-2 w-full text-[10px]">
-                                    <button onclick="openEditPollModal(${item.id}, '${item.event_name}', '${item.description}')" class="text-amber-500 font-bold hover:underline">Edit Entry</button>
-                                    <button onclick="deleteData('event_polls', ${item.id})" class="text-red-500 font-bold hover:underline">Purge Record</button>
-                                </div>
-                            </div>
-                        </div>`).join('') || '<p class="text-xs text-slate-400 italic">No community programmatic options deployed.</p>'; 
-                }
-
-                if (tab === 'funds') {
-                    let { data } = await supabaseClient.from('church_funds').select('*').order('date_recorded', { ascending: false }); 
-                    document.getElementById('funds-table-body').innerHTML = data?.map(item => `
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors tabular-row-item">
-                            <td class="p-4 pl-6 font-bold text-slate-900 dark:text-white search-target-field uppercase tracking-wider text-[10px]">${item.type}</td>
-                            <td class="p-4 text-emerald-500 font-extrabold font-mono">₱${parseFloat(item.amount).toLocaleString()}</td>
-                            <td class="p-4 text-slate-400 font-mono">${item.date_recorded}</td>
-                            <td class="p-4 text-slate-500 dark:text-slate-400 italic">${item.remarks || ''}</td>
-                            <td class="admin-only p-4 text-center">
-                                <div class="flex gap-2 justify-center">
-                                    <button onclick="openEditFundModal(${item.id}, '${item.type}', ${item.amount}, '${item.date_recorded}', '${item.remarks}')" class="text-[11px] bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white p-1 px-2 rounded-md transition-all font-semibold">Modify</button>
-                                    <button onclick="deleteData('church_funds', ${item.id})" class="text-[11px] bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white p-1 px-2 rounded-md transition-all font-semibold">Purge</button>
-                                </div>
-                            </td>
-                        </tr>`).join('') || '<tr><td colspan="5" class="p-6 text-center text-xs text-slate-400 italic">No financial ledger entries resolved inside storage layer.</td></tr>'; 
-                }
-                
-                applyPermissions(); 
-            } catch (e) {
-                showToast("Data Layer Mapping Fault: " + e.message, "error");
-            } finally {
-                loader.classList.add('hidden');
-            }
-        }
-
-        async function deleteData(table, id) {
-            if (!isAdmin) { 
-                showToast("Access Denied: Logged administrative tokens required.", "error"); 
-                return; 
-            }
-            if (confirm("Confirm core deployment instruction? This action completely wipes item entry metrics natively from the live ledger cloud.")) { 
-                await supabaseClient.from(table).delete().eq('id', id); 
-                showToast("Record dropped completely from cluster layer.", "success");
-                let targetTab = table === 'piso_a_day' ? 'piso-day' : (table === 'officer_plans' ? 'officers-meetings' : (table === 'church_officers' ? 'officers-list' : (table === 'monthly_schedules' ? 'schedule' : (table === 'event_polls' ? 'polls' : (table === 'church_funds' ? 'funds' : table))))); 
-                fetchData(targetTab); 
-            }
-        }
-
-        async function voteEvent(id, currentVotes) {
-            await supabaseClient.from('event_polls').update({ votes: currentVotes + 1 }).eq('id', id); 
-            showToast("Aggregated consensus ledger updated successfully.");
-            fetchData('polls'); 
-        }
-
-        async function setupCustomSunday(weekName) {
-            if (!isAdmin) { 
-                showToast("Access Denied: Administrative permissions required.", "error"); 
-                return; 
-            }
-            await supabaseClient.from('monthly_schedules').insert([{ sunday_week: weekName, verse: "Proverbs 3:5-6 - Trust in the Lord with all your heart...", worship_leader: '', backup_singers: '', guitar: '', bass: '', drummer: '', keyboard: '', multimedia: '' }]);
-            showToast("Dynamic execution structural template provisioned.");
-            fetchData('schedule');
-        }
-
-        function handleGlobalSearch() {
-            const query = document.getElementById('global-search-bar').value.toLowerCase();
-            const inlineCards = document.querySelectorAll('#active-tab-render-zone h3, .search-target-field');
-            inlineCards.forEach(item => {
-                const parentBlock = item.closest('.tabular-row-item') || item.closest('.card-hover-lift') || item.closest('.p-5') || item.closest('.bg-white');
-                if (parentBlock) {
-                    if (item.innerText.toLowerCase().includes(query)) {
-                        parentBlock.style.display = "";
-                    } else {
-                        parentBlock.style.display = "none";
-                    }
-                }
-            });
-        }
-
-        function exportTableToExcel(tableBodyId, filename = 'Data_Export') {
-            const tbody = document.getElementById(tableBodyId);
-            if (!tbody || tbody.rows.length === 0) {
-                showToast("No structured row metrics allocated to parse.", "warning");
-                return;
-            }
-            
-            let csvContent = "data:text/csv;charset=utf-8,";
-            for (let row of tbody.rows) {
-                let rowData = [];
-                for (let cell of row.cells) {
-                    if (!cell.classList.contains('admin-only')) {
-                        rowData.push(`"${cell.innerText.replace(/"/g, '""')}"`);
-                    }
-                }
-                csvContent += rowData.join(",") + "\r\n";
-            }
-            
-            const encodedUri = encodeURI(csvContent);
-            const downloadLink = document.createElement("a");
-            downloadLink.setAttribute("href", encodedUri);
-            downloadLink.setAttribute("download", `${filename}_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            showToast("CSV data metric package streamed successfully.");
-        }
-
-        let sortingDirectionTogglerState = false;
-        function sortTableData(tableBodyId, columnIndex, isNumeric = false) {
-            const tbody = document.getElementById(tableBodyId);
-            const rowsArray = Array.from(tbody.rows);
-            sortingDirectionTogglerState = !sortingDirectionTogglerState;
-
-            rowsArray.sort((rowA, rowB) => {
-                let cellValueA = rowA.cells[columnIndex].innerText.trim().replace(/₱|,/g, '');
-                let cellValueB = rowB.cells[columnIndex].innerText.trim().replace(/₱|,/g, '');
-
-                if (isNumeric) {
-                    return sortingDirectionTogglerState ? parseFloat(cellValueA) - parseFloat(cellValueB) : parseFloat(cellValueB) - parseFloat(cellValueA);
-                }
-                return sortingDirectionTogglerState ? cellValueA.localeCompare(cellValueB) : cellValueB.localeCompare(cellValueA);
-            });
-
-            while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-            tbody.append(...rowsArray);
-            showToast(`Tabular dimension ordered by selected axis attributes.`);
-        }
-
-        function openModal(type) {
-            if (!isAdmin) {
-                showToast("Access Token Fault: Administrative scope missing.", "error");
-                return;
-            }
-            
-            const fieldsContainer = document.getElementById('modal-fields');
-            const title = document.getElementById('modal-title');
-            const saveBtn = document.getElementById('modal-save-btn');
-            
-            fieldsContainer.innerHTML = '';
-            document.getElementById('generic-modal').classList.remove('hidden');
-            
-            setTimeout(() => {
-                const card = document.getElementById('modal-card-element');
-                card.classList.remove('scale-95', 'opacity-0');
-                card.classList.add('scale-100', 'opacity-100');
-            }, 10);
-
-            if (type === 'announcement') {
-                title.innerText = "Provision Announcement Update";
-                fieldsContainer.innerHTML = `
-                    <div><label class="block font-semibold mb-1 text-slate-400">Update Title Banner</label><input type="text" id="f-ann-title" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></div>
-                    <div><label class="block font-semibold mb-1 text-slate-400">Content Body Narrative</label><textarea id="f-ann-content" rows="4" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></textarea></div>
-                `;
-                saveBtn.onclick = async () => {
-                    const titleVal = document.getElementById('f-ann-title').value;
-                    const contentVal = document.getElementById('f-ann-content').value;
-                    if(!titleVal || !contentVal) return showToast("Parameters incomplete.", "warning");
-                    await supabaseClient.from('announcements').insert([{ title: titleVal, content: contentVal }]);
-                    closeModal(); showToast("Announcement pushed successfully."); fetchData('announcements');
-                };
-            }
-            
-            if (type === 'piso') {
-                title.innerText = "Log Micro Contribution Asset";
-                fieldsContainer.innerHTML = `
-                    <div><label class="block font-semibold mb-1 text-slate-400">Member Legal Identity Name</label><input type="text" id="f-piso-name" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></div>
-                    <div><label class="block font-semibold mb-1 text-slate-400">Amount Input (PHP)</label><input type="number" id="f-piso-amt" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></div>
-                    <div><label class="block font-semibold mb-1 text-slate-400">Calendar Timestamp Boundary</label><input type="date" id="f-piso-date" value="${new Date().toISOString().slice(0,10)}" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></div>
-                `;
-                saveBtn.onclick = async () => {
-                    const name = document.getElementById('f-piso-name').value;
-                    const amt = document.getElementById('f-piso-amt').value;
-                    const date = document.getElementById('f-piso-date').value;
-                    if(!name || !amt) return showToast("Parameters incomplete.", "warning");
-                    await supabaseClient.from('piso_a_day').insert([{ member_name: name, amount: parseFloat(amt), date_recorded: date }]);
-                    closeModal(); showToast("Contribution transaction synchronized."); fetchData('piso-day');
-                };
-            }
-
-            if (type === 'officer-rep') {
-                title.innerText = "Register Ecclesiastical Leader Portfolio";
-                fieldsContainer.innerHTML = `
-                    <div><label class="block font-semibold mb-1 text-slate-400">Full Clerical Name</label><input type="text" id="f-off-name" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></div>
-                    <div><label class="block font-semibold mb-1 text-slate-400">Ministry Staff Designation Position</label><input type="text" id="f-off-pos" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></div>
-                    <div><label class="block font-semibold mb-1 text-slate-400">Image Asset Hosting Link URL</label><input type="url" id="f-off-img" value="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></div>
-                `;
-                saveBtn.onclick = async () => {
-                    const name = document.getElementById('f-off-name').value;
-                    const pos = document.getElementById('f-off-pos').value;
-                    const img = document.getElementById('f-off-img').value;
-                    if(!name || !pos) return showToast("Parameters missing.", "warning");
-                    await supabaseClient.from('church_officers').insert([{ name: name, position: pos, image_url: img }]);
-                    closeModal(); showToast("Leadership entity stored."); fetchData('officers-list');
-                };
-            }
-
-            if (type === 'meeting') {
-                title.innerText = "Deploy Strategic Plan Entry";
-                fieldsContainer.innerHTML = `
-                    <div><label class="block font-semibold mb-1 text-slate-400">Agenda Core Banner</label><input type="text" id="f-meet-title" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></div>
-                    <div><label class="block font-semibold mb-1 text-slate-400">Target Session Boundary Date</label><input type="date" id="f-meet-date" value="${new Date().toISOString().slice(0,10)}" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></div>
-                    <div><label class="block font-semibold mb-1 text-slate-400">Resolution Descriptions</label><textarea id="f-meet-desc" rows="3" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></textarea></div>
-                `;
-                saveBtn.onclick = async () => {
-                    const t = document.getElementById('f-meet-title').value;
-                    const d = document.getElementById('f-meet-date').value;
-                    const ds = document.getElementById('f-meet-desc').value;
-                    if(!t || !d) return showToast("Required parameters absent.", "warning");
-                    await supabaseClient.from('officer_plans').insert([{ title: t, meeting_date: d, description: ds }]);
-                    closeModal(); showToast("Corporate plan scheduled."); fetchData('officers-meetings');
-                };
-            }
-
-            if (type === 'poll') {
-                title.innerText = "Suggest Collaborative Event Pipeline";
-                fieldsContainer.innerHTML = `
-                    <div><label class="block font-semibold mb-1 text-slate-400">Program Proposition Title</label><input type="text" id="f-poll-name" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></div>
-                    <div><label class="block font-semibold mb-1 text-slate-400">Program Description Scope</label><textarea id="f-poll-desc" rows="3" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></textarea></div>
-                `;
-                saveBtn.onclick = async () => {
-                    const name = document.getElementById('f-poll-name').value;
-                    const desc = document.getElementById('f-poll-desc').value;
-                    if(!name) return showToast("Name attribute mandatory.", "warning");
-                    await supabaseClient.from('event_polls').insert([{ event_name: name, description: desc, votes: 0 }]);
-                    closeModal(); showToast("Poll initialization complete."); fetchData('polls');
-                };
-            }
-
-            if (type === 'fund') {
-                title.innerText = "Execute Asset Transaction Entry";
-                fieldsContainer.innerHTML = `
-                    <div><label class="block font-semibold mb-1 text-slate-400">Asset Stream Allocation Type</label>
-                        <select id="f-fund-type" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                            <option value="Tithe Offering">Tithe Offering</option>
-                            <option value="General Mission Disbursement">General Mission Disbursement</option>
-                            <option value="Youth Support Contribution">Youth Support Contribution</option>
-                            <option value="Special Asset Procurement">Special Asset Procurement</option>
-                        </select>
+    // 5. PISO A DAY
+    if (tab === 'piso-day') {
+        let { data } = await supabaseClient.from('piso_a_day').select('*').order('date_recorded', { ascending: false });
+        document.getElementById('piso-table-body').innerHTML = data?.map(item => `
+            <tr class="border-b hover:bg-gray-50">
+                <td class="p-3 pl-6 text-white">${item.member_name}</td>
+                <td class="p-3 text-green-400 font-bold">₱${item.amount}</td>
+                <td class="p-3 text-gray-300">${item.date_recorded}</td>
+                <td class="admin-only p-3 text-center">
+                    <div class="flex gap-4 justify-center">
+                        <button onclick="openEditPisoModal(${item.id}, '${item.member_name}', ${item.amount}, '${item.date_recorded}')" class="text-yellow-400 font-semibold text-sm hover:underline">Edit</button>
+                        <button onclick="deleteData('piso_a_day', ${item.id})" class="text-red-400 font-semibold text-sm hover:underline">Remove</button>
                     </div>
-                    <div><label class="block font-semibold mb-1 text-slate-400">Total Transacted Liquidity (PHP)</label><input type="number" id="f-fund-amt" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></div>
-                    <div><label class="block font-semibold mb-1 text-slate-400">Ledger Entry Valuation Date</label><input type="date" id="f-fund-date" value="${new Date().toISOString().slice(0,10)}" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></div>
-                    <div><label class="block font-semibold mb-1 text-slate-400">Remarks Audit Context</label><input type="text" id="f-fund-rem" class="w-full p-2.5 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"></div>
-                `;
-                saveBtn.onclick = async () => {
-                    const type = document.getElementById('f-fund-type').value;
-                    const amt = document.getElementById('f-fund-amt').value;
-                    const date = document.getElementById('f-fund-date').value;
-                    const rem = document.getElementById('f-fund-rem').value;
-                    if(!amt) return showToast("Financial valuation missing.", "warning");
-                    await supabaseClient.from('church_funds').insert([{ type, amount: parseFloat(amt), date_recorded: date, remarks: rem }]);
-                    closeModal(); showToast("Liquidity event posted to ledger core."); fetchData('funds');
-                };
-            }
-        }
+                </td>
+            </tr>`).join('') || '<tr><td colspan="4" class="p-4 text-center text-gray-500">No records found.</td></tr>';
+    }
 
-        function openEditModal(module, id, titleOld, contentOld) {
-            openModal('announcement');
-            document.getElementById('modal-title').innerText = "Update Announcement Vector";
-            document.getElementById('f-ann-title').value = titleOld;
-            document.getElementById('f-ann-content').value = contentOld;
-            document.getElementById('modal-save-btn').onclick = async () => {
-                if(!isAdmin) return;
-                await supabaseClient.from('announcements').update({ title: document.getElementById('f-ann-title').value, content: document.getElementById('f-ann-content').value }).eq('id', id);
-                closeModal(); showToast("Announcement record mutations updated."); fetchData('announcements');
-            };
-        }
+    // 6. EVENT SUGGESTIONS & VOTE POLLS
+    if (tab === 'polls') {
+        let { data } = await supabaseClient.from('event_polls').select('*').order('created_at', { ascending: false });
+        let container = document.getElementById('polls-list');
+        
+        container.innerHTML = data?.map(item => `
+            <div class="bg-white p-5 rounded shadow text-center border border-gray-100 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-xl font-bold text-blue-900">${item.event_name}</h3>
+                    <p class="text-gray-600 text-sm mt-2">${item.description || 'No description'}</p>
+                </div>
+                <div class="mt-4 bg-blue-50 p-3 rounded-lg">
+                    <span class="block text-2xl font-black text-blue-900">${item.votes}</span>
+                    <span class="text-xs text-gray-500 font-bold">Total Votes</span>
+                </div>
+                <div class="mt-4 flex flex-col gap-2">
+                    <button onclick="voteEvent(${item.id}, ${item.votes})" class="w-full bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700 font-bold transition-all cursor-pointer">👍 Vote / Agree</button>
+                    <div class="admin-only flex justify-center gap-4 mt-2 border-t border-gray-100 pt-2 w-full">
+                        <button onclick="openEditPollModal(${item.id}, '${item.event_name}', '${item.description}')" class="text-xs text-yellow-600 font-bold hover:underline">Edit</button>
+                        <button onclick="deleteData('event_polls', ${item.id})" class="text-xs text-red-500 font-bold hover:underline">Remove</button>
+                    </div>
+                </div>
+            </div>`).join('') || '<p class="text-gray-500">No active event suggestions.</p>';
+    }
 
-        function openEditScheduleModal(id) {
-            if (!isAdmin) return;
-            openModal('announcement'); 
-            document.getElementById('modal-title').innerText = "Modify Workflow Identity Roster";
-            document.getElementById('modal-fields').innerHTML = `
-                <div><label class="block font-semibold mb-1 text-slate-400">Worship Leader</label><input type="text" id="f-sc-wl" class="w-full p-2 border rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-200"></div>
-                <div><label class="block font-semibold mb-1 text-slate-400">Back-up Harmonies</label><input type="text" id="f-sc-bu" class="w-full p-2 border rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-200"></div>
-                <div><label class="block font-semibold mb-1 text-slate-400">Lead Guitar</label><input type="text" id="f-sc-gt" class="w-full p-2 border rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-200"></div>
-            `;
-            document.getElementById('modal-save-btn').onclick = async () => {
-                await supabaseClient.from('monthly_schedules').update({
-                    worship_leader: document.getElementById('f-sc-wl').value,
-                    backup_singers: document.getElementById('f-sc-bu').value,
-                    guitar: document.getElementById('f-sc-gt').value
-                }).eq('id', id);
-                closeModal(); showToast("ecclessiastical production shifts re-saved."); fetchData('schedule');
-            };
-        }
+    // 7. CHURCH FUNDS
+    if (tab === 'funds') {
+        let { data } = await supabaseClient.from('church_funds').select('*').order('date_recorded', { ascending: false });
+        document.getElementById('funds-table-body').innerHTML = data?.map(item => `
+            <tr class="border-b hover:bg-gray-50">
+                <td class="p-3 font-semibold pl-6 text-white">${item.type}</td>
+                <td class="p-3 text-green-400 font-bold">₱${item.amount}</td>
+                <td class="p-3 text-gray-300">${item.date_recorded}</td>
+                <td class="p-3 text-gray-200">${item.remarks || ''}</td>
+                <td class="admin-only p-3 text-center">
+                    <div class="flex gap-4 justify-center">
+                        <button onclick="openEditFundModal(${item.id}, '${item.type}', ${item.amount}, '${item.date_recorded}', '${item.remarks}')" class="text-yellow-400 font-semibold text-sm hover:underline">Edit</button>
+                        <button onclick="deleteData('church_funds', ${item.id})" class="text-red-400 font-semibold text-sm hover:underline">Remove</button>
+                    </div>
+                </td>
+            </tr>`).join('') || '<tr><td colspan="5" class="p-4 text-center text-gray-500">No financial history logs.</td></tr>';
+    }
+    
+    applyPermissions();
+}
 
-        function openEditOfficerModal(id, name, pos, url) {
-            openModal('officer-rep');
-            document.getElementById('modal-title').innerText = "Update Leader Identity Profile";
-            document.getElementById('f-off-name').value = name;
-            document.getElementById('f-off-pos').value = pos;
-            document.getElementById('f-off-img').value = url;
-            document.getElementById('modal-save-btn').onclick = async () => {
-                await supabaseClient.from('church_officers').update({ name: document.getElementById('f-off-name').value, position: document.getElementById('f-off-pos').value, image_url: document.getElementById('f-off-img').value }).eq('id', id);
-                closeModal(); showToast("Officer profile modified."); fetchData('officers-list');
-            };
-        }
+// ==========================================
+// OPERATIONAL ENGINES (VOTE, SYSTEM, DELETE)
+// ==========================================
+async function deleteData(table, id) {
+    if (!isAdmin) {
+        alert("Access Denied: Only logged-in administrators can delete data.");
+        return;
+    }
+    if (confirm("Are you sure you want to remove or delete this permanently?")) {
+        await supabaseClient.from(table).delete().eq('id', id);
+        alert("Record successfully removed!");
+        
+        let targetTab = table === 'piso_a_day' ? 'piso-day' : 
+                        (table === 'officer_plans' ? 'officers-meetings' : 
+                        (table === 'church_officers' ? 'officers-list' : 
+                        (table === 'monthly_schedules' ? 'schedule' : 
+                        (table === 'event_polls' ? 'polls' : 
+                        (table === 'church_funds' ? 'funds' : table)))));
+        fetchData(targetTab);
+    }
+}
 
-        function openEditMeetingModal(id, title, date, desc) {
-            openModal('meeting');
-            document.getElementById('modal-title').innerText = "Edit Scheduled Corporate Resolution";
-            document.getElementById('f-meet-title').value = title;
-            document.getElementById('f-meet-date').value = date;
-            document.getElementById('f-meet-desc').value = desc;
-            document.getElementById('modal-save-btn').onclick = async () => {
-                await supabaseClient.from('officer_plans').update({ title: document.getElementById('f-meet-title').value, meeting_date: document.getElementById('f-meet-date').value, description: document.getElementById('f-meet-desc').value }).eq('id', id);
-                closeModal(); showToast("Agenda record parameters tracking synchronized."); fetchData('officers-meetings');
-            };
-        }
+async function voteEvent(id, currentVotes) {
+    await supabaseClient.from('event_polls').update({ votes: currentVotes + 1 }).eq('id', id);
+    fetchData('polls');
+}
 
-        function openEditPisoModal(id, oldName, oldAmt, oldDate) {
-            openModal('piso');
-            document.getElementById('modal-title').innerText = "Edit Contribution Block Parameters";
-            document.getElementById('f-piso-name').value = oldName;
-            document.getElementById('f-piso-amt').value = oldAmt;
-            document.getElementById('f-piso-date').value = oldDate;
-            document.getElementById('modal-save-btn').onclick = async () => {
-                if(!isAdmin) return;
-                await supabaseClient.from('piso_a_day').update({ member_name: document.getElementById('f-piso-name').value, amount: parseFloat(document.getElementById('f-piso-amt').value), date_recorded: document.getElementById('f-piso-date').value }).eq('id', id);
-                closeModal(); showToast("Transaction ledger value recalculated."); fetchData('piso-day');
-            };
-        }
+async function setupCustomSunday(weekName) {
+    if (!isAdmin) {
+        alert("Access Denied: Only logged-in administrators can create layouts.");
+        return;
+    }
+    await supabaseClient.from('monthly_schedules').insert([{ 
+        sunday_week: weekName, 
+        verse: "Psalm 104:33 - I will sing to the Lord as long as I live...", 
+        worship_leader: "", backup_singers: "", guitar: "", bass: "", drummer: "", keyboard: "", multimedia: "" 
+    }]);
+    fetchData('schedule');
+}
 
-        function openEditPollModal(id, oldName, oldDesc) {
-            openModal('poll');
-            document.getElementById('modal-title').innerText = "Edit Poll Metric Configuration";
-            document.getElementById('f-poll-name').value = oldName;
-            document.getElementById('f-poll-desc').value = oldDesc;
-            document.getElementById('modal-save-btn').onclick = async () => {
-                if (!isAdmin) return;
-                await supabaseClient.from('event_polls').update({ event_name: document.getElementById('f-poll-name').value, description: document.getElementById('f-poll-desc').value }).eq('id', id);
-                closeModal(); showToast("Event suggestion updated."); fetchData('polls');
-            };
-        }
+// ==========================================
+// MODAL ENGINE (OPEN & CLOSE)
+// ==========================================
+function closeModal() {
+    document.getElementById('generic-modal').classList.add('hidden');
+    document.getElementById('modal-fields').innerHTML = '';
+}
 
-        function openEditFundModal(id, oldType, oldAmt, oldDate, oldRem) {
-            openModal('fund');
-            document.getElementById('modal-title').innerText = "Edit Fund Transaction Ledger Block";
-            document.getElementById('f-fund-type').value = oldType;
-            document.getElementById('f-fund-amt').value = oldAmt;
-            document.getElementById('f-fund-date').value = oldDate;
-            document.getElementById('f-fund-rem').value = oldRem;
-            document.getElementById('modal-save-btn').onclick = async () => {
-                if (!isAdmin) return;
-                await supabaseClient.from('church_funds').update({ type: document.getElementById('f-fund-type').value, amount: parseFloat(document.getElementById('f-fund-amt').value), date_recorded: document.getElementById('f-fund-date').value, remarks: document.getElementById('f-fund-rem').value }).eq('id', id);
-                closeModal(); showToast("Disbursement asset ledger row committed."); fetchData('funds');
-            };
-        }
+function openModal(mode) {
+    if (!isAdmin) {
+        alert("Access Denied: Only logged-in administrators can modify content.");
+        return;
+    }
+    const modal = document.getElementById('generic-modal');
+    const fields = document.getElementById('modal-fields');
+    modal.classList.remove('hidden');
 
-        function closeModal() {
-            const card = document.getElementById('modal-card-element');
-            card.classList.remove('scale-100', 'opacity-100');
-            card.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                document.getElementById('generic-modal').classList.add('hidden');
-            }, 150);
-        }
+    if (mode === 'announcement') {
+        document.getElementById('modal-title').innerText = "Create New Announcement";
+        fields.innerHTML = `
+            <input type="text" id="f-title" placeholder="Title" class="w-full p-2 border rounded mb-2">
+            <textarea id="f-content" placeholder="Details" class="w-full p-2 border rounded"></textarea>`;
+        
+        document.getElementById('modal-save-btn').onclick = async () => {
+            await supabaseClient.from('announcements').insert([{ 
+                title: document.getElementById('f-title').value, 
+                content: document.getElementById('f-content').value 
+            }]);
+            closeModal(); 
+            fetchData('announcements');
+        };
+    }
+    
+    if (mode === 'officer-rep') {
+        document.getElementById('modal-title').innerText = "Add Church Officer Representative";
+        fields.innerHTML = `
+            <input type="text" id="f-off-name" placeholder="Full Name" class="w-full p-2 border rounded mb-2">
+            <input type="text" id="f-off-pos" placeholder="Position (e.g., Pastor, Elder, Deacon)" class="w-full p-2 border rounded mb-2">
+            <input type="text" id="f-off-img" placeholder="Image URL (Optional)" class="w-full p-2 border rounded">`;
+        
+        document.getElementById('modal-save-btn').onclick = async () => {
+            await supabaseClient.from('church_officers').insert([{ 
+                name: document.getElementById('f-off-name').value, 
+                position: document.getElementById('f-off-pos').value, 
+                image_url: document.getElementById('f-off-img').value 
+            }]);
+            closeModal(); 
+            fetchData('officers-list');
+        };
+    }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            switchTab('announcements');
-        });
-    </script>
-</body>
-</html>
+    if (mode === 'meeting') {
+        document.getElementById('modal-title').innerText = "Add Meeting / Plan Plan";
+        fields.innerHTML = `
+            <input type="text" id="f-meet-title" placeholder="Plan / Meeting Title" class="w-full p-2 border rounded mb-2">
+            <input type="date" id="f-meet-date" class="w-full p-2 border rounded mb-2">
+            <textarea id="f-meet-desc" placeholder="Agenda Description Details" class="w-full p-2 border rounded"></textarea>`;
+        
+        document.getElementById('modal-save-btn').onclick = async () => {
+            await supabaseClient.from('officer_plans').insert([{ 
+                title: document.getElementById('f-meet-title').value, 
+                meeting_date: document.getElementById('f-meet-date').value, 
+                description: document.getElementById('f-meet-desc').value 
+            }]);
+            closeModal(); 
+            fetchData('officers-meetings');
+        };
+    }
+
+    if (mode === 'piso') {
+        document.getElementById('modal-title').innerText = "Add Piso A Day Record";
+        fields.innerHTML = `
+            <input type="text" id="f-piso-name" placeholder="Member Name" class="w-full p-2 border rounded mb-2">
+            <input type="number" id="f-piso-amt" placeholder="Amount (₱)" class="w-full p-2 border rounded mb-2">
+            <input type="date" id="f-piso-date" class="w-full p-2 border rounded">`;
+        
+        document.getElementById('modal-save-btn').onclick = async () => {
+            await supabaseClient.from('piso_a_day').insert([{ 
+                member_name: document.getElementById('f-piso-name').value, 
+                amount: parseFloat(document.getElementById('f-piso-amt').value), 
+                date_recorded: document.getElementById('f-piso-date').value 
+            }]);
+            closeModal(); 
+            fetchData('piso-day');
+        };
+    }
+
+    if (mode === 'poll') {
+        document.getElementById('modal-title').innerText = "Suggest New Event Poll";
+        fields.innerHTML = `
+            <input type="text" id="f-poll-name" placeholder="Proposed Event Name" class="w-full p-2 border rounded mb-2">
+            <textarea id="f-poll-desc" placeholder="Brief Event Explanation" class="w-full p-2 border rounded"></textarea>`;
+        
+        document.getElementById('modal-save-btn').onclick = async () => {
+            await supabaseClient.from('event_polls').insert([{ 
+                event_name: document.getElementById('f-poll-name').value, 
+                description: document.getElementById('f-poll-desc').value,
+                votes: 0
+            }]);
+            closeModal(); 
+            fetchData('polls');
+        };
+    }
+
+    if (mode === 'fund') {
+        document.getElementById('modal-title').innerText = "Record Fund Transaction";
+        fields.innerHTML = `
+            <select id="f-fund-type" class="w-full p-2 border rounded mb-2">
+                <option value="Tithes">Tithes</option>
+                <option value="Offering">Offering</option>
+                <option value="Donation">Special Donation</option>
+                <option value="Expense">Expense/Outflow</option>
+            </select>
+            <input type="number" id="f-fund-amt" placeholder="Amount (₱)" class="w-full p-2 border rounded mb-2">
+            <input type="date" id="f-fund-date" class="w-full p-2 border rounded mb-2">
+            <input type="text" id="f-fund-rem" placeholder="Remarks/Notes" class="w-full p-2 border rounded">`;
+        
+        document.getElementById('modal-save-btn').onclick = async () => {
+            await supabaseClient.from('church_funds').insert([{ 
+                type: document.getElementById('f-fund-type').value, 
+                amount: parseFloat(document.getElementById('f-fund-amt').value), 
+                date_recorded: document.getElementById('f-fund-date').value,
+                remarks: document.getElementById('f-fund-rem').value
+            }]);
+            closeModal(); 
+            fetchData('funds');
+        };
+    }
+}
+
+// ==========================================
+// DYNAMIC EDIT OVERLAY MODAL SETUPS
+// ==========================================
+function openEditModal(mode, id, oldTitle, oldContent) {
+    openModal(mode);
+    document.getElementById('modal-title').innerText = "Update Announcement";
+    document.getElementById('f-title').value = oldTitle;
+    document.getElementById('f-content').value = oldContent;
+    document.getElementById('modal-save-btn').onclick = async () => {
+        await supabaseClient.from('announcements').update({ 
+            title: document.getElementById('f-title').value, 
+            content: document.getElementById('f-content').value 
+        }).eq('id', id);
+        closeModal(); 
+        fetchData('announcements');
+    };
+}
+
+function openEditScheduleModal(id) {
+    // Kinukuha ang kasalukuyang hawak na record para i-edit
+    alert("Loading Lineup Editor...");
+    // Maaari mo itong palawigin para mag-popup ang 7 input fields ng Praise Team members.
+}
+
+function openEditOfficerModal(id, oldName, oldPos, oldImg) {
+    openModal('officer-rep');
+    document.getElementById('modal-title').innerText = "Edit Church Officer";
+    document.getElementById('f-off-name').value = oldName;
+    document.getElementById('f-off-pos').value = oldPos;
+    document.getElementById('f-off-img').value = oldImg;
+    document.getElementById('modal-save-btn').onclick = async () => {
+        await supabaseClient.from('church_officers').update({ 
+            name: document.getElementById('f-off-name').value, 
+            position: document.getElementById('f-off-pos').value, 
+            image_url: document.getElementById('f-off-img').value 
+        }).eq('id', id);
+        closeModal(); 
+        fetchData('officers-list');
+    };
+}
+
+function openEditMeetingModal(id, oldTitle, oldDate, oldDesc) {
+    openModal('meeting');
+    document.getElementById('modal-title').innerText = "Edit Meeting Agenda";
+    document.getElementById('f-meet-title').value = oldTitle;
+    document.getElementById('f-meet-date').value = oldDate;
+    document.getElementById('f-meet-desc').value = oldDesc;
+    document.getElementById('modal-save-btn').onclick = async () => {
+        await supabaseClient.from('officer_plans').update({ 
+            title: document.getElementById('f-meet-title').value, 
+            meeting_date: document.getElementById('f-meet-date').value, 
+            description: document.getElementById('f-meet-desc').value 
+        }).eq('id', id);
+        closeModal(); 
+        fetchData('officers-meetings');
+    };
+}
+
+function openEditPisoModal(id, oldName, oldAmt, oldDate) {
+    openModal('piso');
+    document.getElementById('modal-title').innerText = "Edit Piso Record";
+    document.getElementById('f-piso-name').value = oldName;
+    document.getElementById('f-piso-amt').value = oldAmt;
+    document.getElementById('f-piso-date').value = oldDate;
+    document.getElementById('modal-save-btn').onclick = async () => {
+        await supabaseClient.from('piso_a_day').update({ 
+            member_name: document.getElementById('f-piso-name').value, 
+            amount: parseFloat(document.getElementById('f-piso-amt').value), 
+            date_recorded: document.getElementById('f-piso-date').value 
+        }).eq('id', id);
+        closeModal(); 
+        fetchData('piso-day');
+    };
+}
+
+function openEditPollModal(id, oldName, oldDesc) {
+    openModal('poll');
+    document.getElementById('modal-title').innerText = "Edit Event Suggestion";
+    document.getElementById('f-poll-name').value = oldName;
+    document.getElementById('f-poll-desc').value = oldDesc;
+    document.getElementById('modal-save-btn').onclick = async () => {
+        await supabaseClient.from('event_polls').update({ 
+            event_name: document.getElementById('f-poll-name').value, 
+            description: document.getElementById('f-poll-desc').value 
+        }).eq('id', id);
+        closeModal(); 
+        fetchData('polls');
+    };
+}
+
+function openEditFundModal(id, oldType, oldAmt, oldDate, oldRem) {
+    openModal('fund');
+    document.getElementById('modal-title').innerText = "Edit Fund Transaction";
+    document.getElementById('f-fund-type').value = oldType;
+    document.getElementById('f-fund-amt').value = oldAmt;
+    document.getElementById('f-fund-date').value = oldDate;
+    document.getElementById('f-fund-rem').value = oldRem;
+    document.getElementById('modal-save-btn').onclick = async () => {
+        await supabaseClient.from('church_funds').update({ 
+            type: document.getElementById('f-fund-type').value, 
+            amount: parseFloat(document.getElementById('f-fund-amt').value), 
+            date_recorded: document.getElementById('f-fund-date').value, 
+            remarks: document.getElementById('f-fund-rem').value 
+        }).eq('id', id);
+        closeModal(); 
+        fetchData('funds');
+    };
+}
+
+// ==========================================
+// BIND ALL FUNCTIONS TO GLOBAL WINDOW OBJECT
+// ==========================================
+window.switchTab = switchTab;
+window.toggleViewMode = toggleViewMode;
+window.applyPermissions = applyPermissions;
+window.login = login;
+window.logout = logout;
+window.fetchData = fetchData;
+window.deleteData = deleteData;
+window.voteEvent = voteEvent;
+window.setupCustomSunday = setupCustomSunday;
+window.closeModal = closeModal;
+window.openModal = openModal;
+window.openEditModal = openEditModal;
+window.openEditScheduleModal = openEditScheduleModal;
+window.openEditOfficerModal = openEditOfficerModal;
+window.openEditMeetingModal = openEditMeetingModal;
+window.openEditPisoModal = openEditPisoModal;
+window.openEditPollModal = openEditPollModal;
+window.openEditFundModal = openEditFundModal;
+
+// Initial Setup upon page parsing
+document.addEventListener('DOMContentLoaded', () => {
+    applyPermissions();
+});
