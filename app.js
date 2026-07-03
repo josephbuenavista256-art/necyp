@@ -108,35 +108,23 @@
             });
         }
 
-        // SUPABASE BACKEND CLOUD SIGNIN INTERACTION LAYER [cite: 386]
-      async function login() {
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-    const loginBtn = document.getElementById('login-btn');
+async function login() {
+    // 1. Pilitin muna nating buksan ang dashboard para i-test kung gumagana ang UI mo
+    console.log("Sinusubukang pumasok sa dashboard...");
     
-    if(!email || !password) {
-        showToast("Mangyaring maglagay ng email at password.", "warning");
-        return;
-    }
-
-    loginBtn.disabled = true;
-    loginBtn.innerHTML = `<span>Kumokonekta...</span>`;
-
-    // Dito natin susuriin ang response
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    
-    loginBtn.disabled = true;
-    loginBtn.innerHTML = `<span>Sign In As Admin</span>`;
-
-    if (error) {
-        console.error("Supabase Auth Error Details:", error); // Lalabas ito sa F12 Console
-        showToast("Authentication Failed: " + error.message, "error");
-    } else {
-        showToast("Matagumpay na nakakonekta!", "success");
-        toggleViewMode(false);
+    try {
+        // Palitan mo ito kung ano man ang totoong function mo pang-lipat ng view
+        // Halimbawa: pilitin nating gawing true ang admin state
+        isAdmin = true; 
+        
+        // Kung may function ka na nagpapakita ng member/admin dashboard, tawagin mo rito:
+        // toggleViewMode(true); 
+        
+        showToast("Testing: Pumasok sa dashboard!", "success");
+    } catch (err) {
+        console.error("May error sa UI transition mo:", err);
     }
 }
-
         function logout() {
             supabaseClient.auth.signOut(); // [cite: 388]
             isAdmin = false; // [cite: 389]
