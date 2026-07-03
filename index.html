@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nasug-ong Evangelical Church Portal</title>
+    <!-- Tailwind CSS v4 -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style> 
@@ -30,13 +31,17 @@
             border-right: 1px solid rgba(255, 255, 255, 0.15);
         }
 
-        /* UNIVERSAL CARD CONTAINERS */
+        /* ==========================================================================
+           STRICT CONTRAST & TYPOGRAPHY OVERRIDES
+           ========================================================================== */
+        
+        /* 1. UNIVERSAL CARD CONTAINERS */
         .classic-card, 
         [id*="-list"] > div, 
         [id*="-container"] > div,
         #meetings-list > div,
         #polls-list > div {
-            background: rgba(24, 24, 27, 0.98) !important;
+            background: rgba(24, 24, 27, 0.98) !important; 
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7) !important;
             border: 1px solid rgba(255, 255, 255, 0.2) !important;
             padding: 1.5rem !important;
@@ -45,12 +50,12 @@
             position: relative;
         }
 
-        /* TITLES & HEADINGS INSIDE DYNAMIC CARDS */
+        /* 2. TITLES & HEADINGS INSIDE DYNAMIC CARDS */
         .classic-card h3, .classic-card h4, 
         [id*="-list"] h3, [id*="-list"] h4,
         [id*="-container"] h3, [id*="-container"] h4,
         #meetings-list h3, #polls-list h3 {
-            color: #ffffff !important;
+            color: #ffffff !important; 
             font-size: 1.4rem !important;
             font-weight: 700 !important;
             letter-spacing: 0.025em !important;
@@ -58,12 +63,12 @@
             display: block;
         }
 
-        /* DESCRIPTIONS / SUB-TEXT */
+        /* 3. DESCRIPTIONS / SUB-TEXT */
         .classic-card p, .classic-card div:not(.action-buttons), 
         [id*="-list"] p, [id*="-list"] div:not(.action-buttons),
         [id*="-container"] p, [id*="-container"] div:not(.action-buttons),
         #meetings-list p, #polls-list p {
-            color: #f4f4f5 !important;
+            color: #f4f4f5 !important; 
             font-size: 1.15rem !important;
             line-height: 1.6 !important;
         }
@@ -75,9 +80,9 @@
             letter-spacing: 0.05em;
         }
 
-        /* CHURCH OFFICERS SPECIFIC FIX */
+        /* 4. CHURCH OFFICERS SPECIFIC FIX */
         #officers-grid > div {
-            background: #ffffff !important;
+            background: #ffffff !important; 
             border: 1px solid #e4e4e7 !important;
             padding: 1.25rem !important;
             border-radius: 0.75rem !important;
@@ -88,14 +93,14 @@
         #officers-grid > div p, 
         #officers-grid > div span,
         #officers-grid > div div {
-            color: #09090b !important;
+            color: #09090b !important; 
             font-size: 1.2rem !important;
             font-weight: 700 !important;
             margin-top: 0.5rem !important;
             margin-bottom: 0.5rem !important;
         }
 
-        /* BUTTON SPACING */
+        /* 5. BUTTON SPACING AND COUPLING FIXES */
         .classic-card button, 
         [id*="-list"] button, 
         [id*="-container"] button,
@@ -111,52 +116,102 @@
         }
 
         a[onclick*="edit"], button[onclick*="edit"], .text-yellow-500 {
-            color: #fbbf24 !important;
+            color: #fbbf24 !important; 
         }
         a[onclick*="remove"], button[onclick*="remove"], .text-red-500 {
-            color: #ef4444 !important;
+            color: #ef4444 !important; 
         }
 
-        /* TABLES DATA ENHANCEMENT */
+        .classic-card span, .classic-card small,
+        [id*="-list"] span, [id*="-list"] small,
+        #meetings-list span {
+            color: #d4d4d8 !important; 
+            font-size: 1.05rem !important;
+            display: inline-block;
+            margin-right: 1rem;
+        }
+
+        /* 6. TOTAL VOTES DISPLAY BOX */
+        #polls-list div blockquote, 
+        #polls-list .votes-box,
+        #polls-list > div > div:nth-child(2) {
+            background: #f4f4f5 !important; 
+            border: 1px solid #e4e4e7 !important;
+            border-radius: 0.5rem !important;
+            padding: 0.75rem !important;
+            margin: 1rem 0 !important;
+            text-align: center !important;
+        }
+        #polls-list .votes-box *,
+        #polls-list > div > div:nth-child(2) * {
+            color: #18181b !important; 
+            font-weight: 700 !important;
+            font-size: 1.1rem !important;
+        }
+
+        /* 7. TABLES DATA ENHANCEMENT */
         table tbody tr td {
-            color: #ffffff !important;
+            color: #ffffff !important; 
             font-size: 1.1rem !important;
             padding: 1.25rem 1rem !important;
         }
-        .text-green-500 {
-            color: #4ade80 !important;
+        table tbody tr td:nth-child(4) {
+            color: #e4e4e7 !important; 
+            font-style: italic;
+        }
+        .text-green-500, [class*="text-green"] {
+            color: #4ade80 !important; 
             font-weight: 700 !important;
+            font-size: 1.15rem !important;
         }
 
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
     </style>
 </head>
 <body class="bg-slate-950 antialiased">
 
+    <!-- LOGIN AREA -->
     <div id="auth-container" class="min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat relative bg-fixed px-4" style="background-image: url('churchlogo.png.jpg');">
         <div class="absolute inset-0 bg-slate-950/75 pointer-events-none"></div>
 
         <div class="relative w-full max-w-4xl rounded-2xl shadow-2xl border border-white/10 bg-stone-900/95 backdrop-blur-xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
+            
+            <!-- Left Branding Panel -->
             <div class="p-8 md:p-12 bg-black/40 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-white/10">
                 <div class="w-24 h-24 mb-4 overflow-hidden rounded-full border-2 border-white/20 bg-stone-800 flex items-center justify-center shadow-2xl">
-                    <img src="churchlogo.png.jpg" alt="NEC Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" class="w-full h-full object-cover">
+                    <img src="churchlogo.png.jpg" alt="NEC Logo" 
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" 
+                         class="w-full h-full object-cover">
                     <span class="hidden text-3xl">⛪</span>
                 </div>
-                <h2 class="text-3xl font-medium text-stone-100 tracking-wide italic">NEC Admin Portal</h2>
-                <p class="text-xs text-stone-400 tracking-widest uppercase mt-2">Nasug-ong Evangelical Church</p>
+                <h2 class="text-3xl font-medium text-stone-100 tracking-wide italic">
+                    NEC Admin Portal
+                </h2>
+                <p class="text-xs text-stone-400 tracking-widest uppercase mt-2">
+                    Nasug-ong Evangelical Church
+                </p>
                 <div class="w-16 h-[1px] bg-stone-600 mt-4"></div>
             </div>
 
+            <!-- Right Controls Panel -->
             <div class="p-8 md:p-12 flex flex-col justify-center gap-5">
                 <h3 class="text-xl font-bold text-stone-200 mb-1">Account Authentication</h3>
+                
                 <div class="flex flex-col gap-4">
-                    <input type="email" id="login-email" placeholder="Admin Email Address" class="w-full p-3.5 border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 bg-white/5 text-stone-100 placeholder-stone-400 text-base">
-                    <input type="password" id="login-password" placeholder="Account Password" class="w-full p-3.5 border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 bg-white/5 text-stone-100 placeholder-stone-400 text-base">
+                    <input type="email" id="login-email" placeholder="Admin Email Address" 
+                           class="w-full p-3.5 border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 bg-white/5 text-stone-100 placeholder-stone-400 text-base">
+                    
+                    <input type="password" id="login-password" placeholder="Account Password" 
+                           class="w-full p-3.5 border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 bg-white/5 text-stone-100 placeholder-stone-400 text-base">
+                    
                     <button onclick="login()" class="w-full bg-stone-100 hover:bg-stone-200 text-stone-950 p-3.5 rounded-lg font-bold transition-all cursor-pointer text-sm uppercase tracking-wider shadow-md mt-2">
                         Sign In As Admin
                     </button>
                 </div>
+
                 <div class="border-t border-white/10 pt-4 mt-2">
                     <button onclick="toggleViewMode(true)" class="w-full text-xs font-bold text-stone-300 hover:text-white transition-colors cursor-pointer tracking-widest uppercase bg-white/5 hover:bg-white/10 border border-white/10 py-3 px-5 rounded-lg text-center block">
                         View As Member (Read-Only) ↗
@@ -166,9 +221,11 @@
         </div>
     </div>
 
+    <!-- MAIN PORTAL SYSTEM -->
     <div id="app-container" class="min-h-screen flex hidden bg-cover bg-center bg-no-repeat relative bg-fixed" style="background-image: url('churchlogo.png.jpg');">
         <div class="absolute inset-0 bg-slate-950/60 pointer-events-none"></div>
 
+        <!-- SIDEBAR NAVIGATION -->
         <aside class="w-68 glass-sidebar text-stone-200 flex flex-col justify-between p-6 shadow-2xl z-20">
             <div>
                 <div class="flex flex-col items-center text-center border-b border-white/10 pb-6 mb-6">
@@ -195,7 +252,10 @@
             </div>
         </aside>
 
+        <!-- MAIN CONTENT AREA -->
         <main class="flex-1 p-8 overflow-y-auto z-10">
+            
+            <!-- TAB: ANNOUNCEMENTS -->
             <section id="tab-announcements" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl">
                 <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
                     <div>
@@ -207,6 +267,7 @@
                 <div id="announcements-list" class="grid grid-cols-1 gap-6"></div>
             </section>
 
+            <!-- TAB: MONTHLY SCHEDULE LINE-UP -->
             <section id="tab-schedule" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl hidden">
                 <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
                     <div>
@@ -226,6 +287,7 @@
                 <div id="schedule-container" class="p-4"></div>
             </section>
 
+            <!-- TAB: CHURCH OFFICERS LIST -->
             <section id="tab-officers-list" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl hidden">
                 <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
                     <div>
@@ -237,6 +299,7 @@
                 <div id="officers-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"></div>
             </section>
 
+            <!-- TAB: OFFICERS MEETINGS & PLANS -->
             <section id="tab-officers-meetings" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl hidden">
                 <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
                     <div>
@@ -248,6 +311,7 @@
                 <div id="meetings-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
             </section>
 
+            <!-- TAB: PISO A DAY -->
             <section id="tab-piso-day" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl hidden">
                 <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
                     <div>
@@ -271,6 +335,7 @@
                 </div>
             </section>
 
+            <!-- TAB: EVENT SUGGESTIONS & VOTE POLLS -->
             <section id="tab-polls" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl hidden">
                 <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
                     <div>
@@ -282,6 +347,7 @@
                 <div id="polls-list" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
             </section>
 
+            <!-- TAB: CHURCH FUNDS -->
             <section id="tab-funds" class="tab-content bg-section-glass p-8 rounded-2xl shadow-2xl hidden">
                 <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
                     <div>
@@ -305,9 +371,11 @@
                     </table>
                 </div>
             </section>
+
         </main>
     </div>
 
+    <!-- MODAL -->
     <div id="generic-modal" class="hidden fixed inset-0 bg-slate-950/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
         <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl border border-stone-200">
             <h3 id="modal-title" class="text-2xl font-bold mb-4 text-stone-900 tracking-tight">Add Entry</h3>
@@ -319,246 +387,6 @@
         </div>
     </div>
 
-    <script>
-        // Isang beses lang idideklara ang mga constants sa buong file
-        const SUPABASE_URL = "https://nbcuzewrgfdaiowbovc.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_xVZvbjf4t0vRSZCWluJlag_VAURlr6h"; 
-
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        let isAdmin = false;
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            const targetTab = document.getElementById(`tab-${tabName}`);
-            if (targetTab) targetTab.classList.remove('hidden');
-            fetchData(tabName);
-        }
-
-        function toggleViewMode(asGuest) {
-            document.getElementById('auth-container').classList.add('hidden');
-            document.getElementById('app-container').classList.remove('hidden');
-            isAdmin = !asGuest;
-            
-            document.getElementById('user-role-badge').innerText = isAdmin ? "Admin Mode Active" : "Member View (Read-Only)";
-            applyPermissions();
-            switchTab('announcements');
-        }
-
-        function applyPermissions() {
-            document.querySelectorAll('.admin-only').forEach(el => {
-                if (isAdmin) el.classList.remove('hidden');
-                else el.classList.add('hidden');
-            });
-        }
-
-        async function login() {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            
-            if (!email || !password) {
-                alert("Please fill in both fields.");
-                return;
-            }
-
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) {
-                alert("Login Error: " + error.message);
-            } else {
-                toggleViewMode(false);
-            }
-        }
-
-        function logout() {
-            supabaseClient.auth.signOut();
-            isAdmin = false;
-            document.getElementById('app-container').classList.add('hidden');
-            document.getElementById('auth-container').classList.remove('hidden');
-        }
-
-        async function fetchData(tab) {
-            if (tab === 'announcements') {
-                let { data } = await supabaseClient.from('announcements').select('*').order('created_at', { ascending: false });
-                let container = document.getElementById('announcements-list');
-                container.innerHTML = data?.map(item => `
-                    <div class="classic-card">
-                        <h3>${item.title}</h3>
-                        <p>${item.content}</p>
-                        <div class="admin-only mt-4 flex gap-2">
-                            <button onclick="openEditModal('announcement', ${item.id}, '${item.title}', '${item.content}')" class="text-yellow-500 font-bold hover:underline">Edit</button>
-                            <button onclick="deleteData('announcements', ${item.id})" class="text-red-500 font-bold hover:underline">Remove</button>
-                        </div>
-                    </div>`).join('') || '<p class="text-gray-500">No announcements.</p>';
-            }
-
-            if (tab === 'schedule') {
-                const selectedSunday = document.getElementById('sunday-filter').value;
-                let { data } = await supabaseClient.from('monthly_schedules').select('*').eq('sunday_week', selectedSunday);
-                let container = document.getElementById('schedule-container');
-                
-                if (!data || data.length === 0) {
-                    container.innerHTML = `
-                        <p class="text-gray-400">No lineup layout for <b>${selectedSunday}</b>.</p>
-                        <button onclick="setupCustomSunday('${selectedSunday}')" class="admin-only mt-4 bg-white text-black px-4 py-2 rounded text-sm font-bold shadow hover:bg-stone-200 cursor-pointer">+ Create Template</button>
-                    `;
-                    applyPermissions();
-                    return;
-                }
-
-                let sched = data[0];
-                container.innerHTML = `
-                    <div class="classic-card">
-                        <h3>${sched.sunday_week} Setup Lineup</h3>
-                        <p class="italic text-yellow-400"><b>Verse:</b> ${sched.verse || 'None'}</p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4 text-white">
-                            <p><b>🎤 Worship Leader:</b> ${sched.worship_leader || 'Unassigned'}</p>
-                            <p><b>🎶 Back-up Singers:</b> ${sched.backup_singers || 'Unassigned'}</p>
-                            <p><b>🎸 Guitar:</b> ${sched.guitar || 'Unassigned'}</p>
-                            <p><b>🎸 Bass:</b> ${sched.bass || 'Unassigned'}</p>
-                            <p><b>🥁 Drummer:</b> ${sched.drummer || 'Unassigned'}</p>
-                            <p><b>🎹 Keyboard:</b> ${sched.keyboard || 'Unassigned'}</p>
-                            <p><b>💻 Multimedia:</b> ${sched.multimedia || 'Unassigned'}</p>
-                        </div>
-                        <button onclick="openEditScheduleModal(${sched.id})" class="admin-only mt-4 bg-yellow-500 text-black px-4 py-2 rounded font-bold hover:bg-yellow-600">✏️ Edit Line-up</button>
-                    </div>`;
-            }
-
-            if (tab === 'officers-list') {
-                let { data } = await supabaseClient.from('church_officers').select('*').order('created_at', { ascending: true });
-                let container = document.getElementById('officers-grid');
-                container.innerHTML = data?.map(item => `
-                    <div class="p-4 bg-white rounded-lg text-center flex flex-col items-center">
-                        <img src="${item.image_url || 'https://via.placeholder.com/150'}" class="w-24 h-24 object-cover rounded-full border mb-2">
-                        <h3 class="font-bold text-gray-900">${item.name}</h3>
-                        <p class="text-sm text-blue-600">${item.position}</p>
-                        <div class="admin-only mt-2 flex gap-2">
-                            <button onclick="openEditOfficerModal(${item.id}, '${item.name}', '${item.position}', '${item.image_url}')" class="text-xs text-yellow-600 font-bold">Edit</button>
-                            <button onclick="deleteData('church_officers', ${item.id})" class="text-xs text-red-600 font-bold">Remove</button>
-                        </div>
-                    </div>`).join('') || '<p class="text-gray-500">No data found.</p>';
-            }
-
-            if (tab === 'piso-day') {
-                let { data } = await supabaseClient.from('piso_a_day').select('*').order('date_recorded', { ascending: false });
-                document.getElementById('piso-table-body').innerHTML = data?.map(item => `
-                    <tr class="border-b">
-                        <td class="p-4 pl-6 font-medium">${item.member_name}</td>
-                        <td class="p-4 text-green-400 font-bold">₱${item.amount}</td>
-                        <td class="p-4 text-gray-400">${item.date_recorded}</td>
-                        <td class="admin-only p-4 text-center">
-                            <button onclick="openEditPisoModal(${item.id}, '${item.member_name}', ${item.amount}, '${item.date_recorded}')" class="text-yellow-500 font-bold">Edit</button>
-                            <button onclick="deleteData('piso_a_day', ${item.id})" class="text-red-500 font-bold">Remove</button>
-                        </td>
-                    </tr>`).join('') || '<tr><td colspan="4" class="p-4 text-center">No records.</td></tr>';
-            }
-
-            if (tab === 'polls') {
-                let { data } = await supabaseClient.from('event_polls').select('*').order('created_at', { ascending: false });
-                let container = document.getElementById('polls-list');
-                container.innerHTML = data?.map(item => `
-                    <div class="classic-card text-center">
-                        <h3>${item.event_name}</h3>
-                        <p class="text-sm text-gray-300">${item.description || 'No description'}</p>
-                        <div class="votes-box my-2 bg-stone-800 p-2 rounded text-white font-bold">Votes: ${item.votes}</div>
-                        <button onclick="voteEvent(${item.id}, ${item.votes})" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">👍 Vote</button>
-                        <div class="admin-only mt-2 flex justify-center gap-2">
-                            <button onclick="openEditPollModal(${item.id}, '${item.event_name}', '${item.description}')" class="text-xs text-yellow-500">Edit</button>
-                            <button onclick="deleteData('event_polls', ${item.id})" class="text-xs text-red-500">Remove</button>
-                        </div>
-                    </div>`).join('') || '<p class="text-gray-500">No updates.</p>';
-            }
-
-            if (tab === 'funds') {
-                let { data } = await supabaseClient.from('church_funds').select('*').order('date_recorded', { ascending: false });
-                document.getElementById('funds-table-body').innerHTML = data?.map(item => `
-                    <tr class="border-b">
-                        <td class="p-4 pl-6">${item.type}</td>
-                        <td class="p-4 text-green-400 font-bold">₱${item.amount}</td>
-                        <td class="p-4 text-gray-400">${item.date_recorded}</td>
-                        <td class="p-4 text-stone-300">${item.remarks || ''}</td>
-                        <td class="admin-only p-4 text-center">
-                            <button onclick="openEditFundModal(${item.id}, '${item.type}', ${item.amount}, '${item.date_recorded}', '${item.remarks}')" class="text-yellow-500 font-bold">Edit</button>
-                            <button onclick="deleteData('church_funds', ${item.id})" class="text-red-500 font-bold">Remove</button>
-                        </td>
-                    </tr>`).join('') || '<tr><td colspan="5" class="p-4 text-center">No logs.</td></tr>';
-            }
-            applyPermissions();
-        }
-
-        async function deleteData(table, id) {
-            if (!isAdmin) return;
-            if (confirm("Delete this permanently?")) {
-                await supabaseClient.from(table).delete().eq('id', id);
-                alert("Deleted successfully!");
-                location.reload();
-            }
-        }
-
-        async function voteEvent(id, currentVotes) {
-            await supabaseClient.from('event_polls').update({ votes: currentVotes + 1 }).eq('id', id);
-            fetchData('polls');
-        }
-
-        async function setupCustomSunday(weekName) {
-            await supabaseClient.from('monthly_schedules').insert([{ sunday_week: weekName }]);
-            fetchData('schedule');
-        }
-
-        function closeModal() {
-            document.getElementById('generic-modal').classList.add('hidden');
-            document.getElementById('modal-fields').innerHTML = '';
-        }
-
-        function openModal(mode) {
-            const modal = document.getElementById('generic-modal');
-            const fields = document.getElementById('modal-fields');
-            modal.classList.remove('hidden');
-
-            if (mode === 'announcement') {
-                document.getElementById('modal-title').innerText = "New Announcement";
-                fields.innerHTML = `
-                    <input type="text" id="f-title" placeholder="Title" class="w-full p-2 border rounded">
-                    <textarea id="f-content" placeholder="Content details" class="w-full p-2 border rounded"></textarea>`;
-                document.getElementById('modal-save-btn').onclick = async () => {
-                    await supabaseClient.from('announcements').insert([{ title: document.getElementById('f-title').value, content: document.getElementById('f-content').value }]);
-                    closeModal(); fetchData('announcements');
-                };
-            }
-            if (mode === 'piso') {
-                document.getElementById('modal-title').innerText = "Add Piso Contribution";
-                fields.innerHTML = `
-                    <input type="text" id="f-piso-name" placeholder="Member Name" class="w-full p-2 border rounded">
-                    <input type="number" id="f-piso-amt" placeholder="Amount" class="w-full p-2 border rounded">
-                    <input type="date" id="f-piso-date" class="w-full p-2 border rounded">`;
-                document.getElementById('modal-save-btn').onclick = async () => {
-                    await supabaseClient.from('piso_a_day').insert([{ member_name: document.getElementById('f-piso-name').value, amount: parseFloat(document.getElementById('f-piso-amt').value), date_recorded: document.getElementById('f-piso-date').value }]);
-                    closeModal(); fetchData('piso-day');
-                };
-            }
-        }
-
-        function openEditModal(mode, id, oldTitle, oldContent) {
-            openModal(mode);
-            document.getElementById('f-title').value = oldTitle;
-            document.getElementById('f-content').value = oldContent;
-            document.getElementById('modal-save-btn').onclick = async () => {
-                await supabaseClient.from('announcements').update({ title: document.getElementById('f-title').value, content: document.getElementById('f-content').value }).eq('id', id);
-                closeModal(); fetchData('announcements');
-            };
-        }
-
-        window.switchTab = switchTab;
-        window.toggleViewMode = toggleViewMode;
-        window.login = login;
-        window.logout = logout;
-        window.fetchData = fetchData;
-        window.deleteData = deleteData;
-        window.voteEvent = voteEvent;
-        window.setupCustomSunday = setupCustomSunday;
-        window.closeModal = closeModal;
-        window.openModal = openModal;
-        window.openEditModal = openEditModal;
-
-        document.addEventListener('DOMContentLoaded', () => { applyPermissions(); });
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
