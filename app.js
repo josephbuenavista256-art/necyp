@@ -125,7 +125,7 @@
     // Dito natin susuriin ang response
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     
-    loginBtn.disabled = false;
+    loginBtn.disabled = true;
     loginBtn.innerHTML = `<span>Sign In As Admin</span>`;
 
     if (error) {
