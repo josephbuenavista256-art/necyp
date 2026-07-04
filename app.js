@@ -19,23 +19,33 @@ function handleDbResponse(error, successMessage, callback) {
 }
 
 // ==========================================
-// CORE NAVIGATION & PERMISSIONS
+// CORE NAVIGATION & PERMISSIONS (WITH TAB ANIMATIONS)
 // ==========================================
 function switchTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    const allTabs = document.querySelectorAll('.tab-content');
+    
+    // Smooth transition pipeline sequence
+    allTabs.forEach(el => {
+        el.classList.remove('tab-active');
+        el.classList.add('hidden');
+    });
+
     const targetTab = document.getElementById(`tab-${tabName}`);
     if (targetTab) {
         targetTab.classList.remove('hidden');
+        // Force Reflow mechanism to trigger clean browser CSS transitions smoothly
+        void targetTab.offsetWidth; 
+        targetTab.classList.add('tab-active');
     }
     
     // Update active state navigation highlighting
     document.querySelectorAll('[data-tab]').forEach(btn => {
         if (btn.getAttribute('data-tab') === tabName) {
-            btn.classList.add('bg-white/10', 'text-white', 'border-l-4', 'border-amber-500');
-            btn.classList.remove('text-stone-400');
+            btn.classList.add('bg-amber-500/10', 'text-amber-400', 'border-l-4', 'border-amber-500', 'pl-6');
+            btn.classList.remove('text-slate-400', 'hover:bg-white/5');
         } else {
-            btn.classList.remove('bg-white/10', 'text-white', 'border-l-4', 'border-amber-500');
-            btn.classList.add('text-stone-400');
+            btn.classList.remove('bg-amber-500/10', 'text-amber-400', 'border-l-4', 'border-amber-500', 'pl-6');
+            btn.classList.add('text-slate-400', 'hover:bg-white/5');
         }
     });
 
@@ -49,11 +59,11 @@ function toggleViewMode(asGuest) {
     
     const roleBadge = document.getElementById('user-role-badge');
     if (isAdmin) {
-        roleBadge.innerText = "Admin Mode Active";
-        roleBadge.className = "block text-[10px] bg-amber-500/20 border border-amber-500/40 py-2 px-3 rounded-md text-center mb-2 font-bold tracking-widest text-amber-400 uppercase";
+        roleBadge.innerText = "Admin Node Access Authorized";
+        roleBadge.className = "block text-[10px] bg-amber-500/10 border border-amber-500/30 py-2.5 px-3 rounded-xl text-center mb-2.5 font-black tracking-widest text-amber-400 uppercase shadow-md shadow-amber-500/5";
     } else {
-        roleBadge.innerText = "Member View (Read-Only)";
-        roleBadge.className = "block text-[10px] bg-white/5 border border-white/10 py-2 px-3 rounded-md text-center mb-2 font-bold tracking-widest text-stone-400 uppercase";
+        roleBadge.innerText = "Member View (Read-Only Mode)";
+        roleBadge.className = "block text-[10px] bg-white/5 border border-white/5 py-2.5 px-3 rounded-xl text-center mb-2.5 font-black tracking-widest text-slate-400 uppercase shadow-inner";
     }
     
     applyPermissions();
@@ -111,16 +121,16 @@ async function fetchData(tab) {
         
         if (error) console.error(error);
         container.innerHTML = data?.map(item => `
-            <div class="premium-card border-l-4 border-amber-500 flex justify-between items-start gap-4">
+            <div class="premium-card border-l-4 border-amber-500/80 flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div class="flex-1">
-                    <h3 class="text-xl font-bold text-white tracking-wide">${item.title}</h3>
-                    <p class="text-stone-300 mt-2 text-base leading-relaxed">${item.content}</p>
+                    <h3 class="text-xl font-extrabold text-white tracking-wide">${item.title}</h3>
+                    <p class="text-slate-300 mt-2.5 text-sm md:text-base leading-relaxed font-medium">${item.content}</p>
                 </div>
-                <div class="admin-only flex gap-3 ml-auto shrink-0">
+                <div class="admin-only flex gap-2.5 sm:ml-auto shrink-0 pt-2 sm:pt-0">
                     <button onclick="openEditModal('announcement', ${item.id}, \`${item.title.replace(/"/g, '&quot;')}\`, \`${item.content.replace(/"/g, '&quot;')}\`)" class="btn-edit">Edit</button>
                     <button onclick="deleteData('announcements', ${item.id})" class="btn-delete">Remove</button>
                 </div>
-            </div>`).join('') || '<p class="text-stone-400 italic">No announcements posted yet.</p>';
+            </div>`).join('') || '<div class="premium-card text-center py-6 text-slate-400 italic">No announcements posted yet in this dynamic repository.</div>';
     }
 
     // 2. WEEKLY LAYOUT SCHEDULES
@@ -133,9 +143,9 @@ async function fetchData(tab) {
 
         if (!data || data.length === 0) {
             container.innerHTML = `
-                <div class="text-center py-8">
-                    <p class="text-stone-400 italic">No configuration timeline layout assigned for <b>${selectedSunday}</b>.</p>
-                    <button onclick="setupCustomSunday('${selectedSunday}')" class="admin-only mt-4 bg-amber-500 text-stone-950 px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/10 cursor-pointer">+ Create a Template for this Week</button>
+                <div class="text-center py-12 premium-card border border-dashed border-white/10">
+                    <p class="text-slate-400 italic text-sm">No configuration timeline layout assigned for <b class="text-amber-400">${selectedSunday}</b>.</p>
+                    <button onclick="setupCustomSunday('${selectedSunday}')" class="admin-only btn-glow-amber mt-5 bg-amber-500 text-[#090d16] px-5 py-2.5 rounded-xl text-xs font-black hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/10 cursor-pointer uppercase tracking-wider">+ Create Template For This Week</button>
                 </div>
             `;
             applyPermissions();
@@ -144,26 +154,26 @@ async function fetchData(tab) {
 
         let sched = data[0];
         container.innerHTML = `
-            <div class="flex flex-col md:flex-row justify-between items-start gap-4 border-b border-white/10 pb-4 mb-6">
-                <div class="flex-1">
-                    <h3 class="text-2xl font-bold text-amber-400 tracking-wide">${sched.sunday_week} Configuration</h3>
-                    <div class="bg-amber-500/5 p-4 italic text-amber-200 rounded-xl my-3 border border-amber-500/20 max-w-2xl text-base leading-relaxed">
-                        <span class="font-bold uppercase tracking-wider text-xs block text-amber-500 mb-1">Weekly Verse Highlight</span>
-                        "${sched.verse || 'No verse assigned.'}"
+            <div class="flex flex-col lg:flex-row justify-between items-start gap-4 border-b border-white/5 pb-5 mb-6">
+                <div class="flex-1 w-full">
+                    <h3 class="text-2xl font-black text-amber-400 tracking-wide">${sched.sunday_week} Configuration</h3>
+                    <div class="bg-amber-500/5 p-4 rounded-xl my-4 border border-amber-500/20 max-w-3xl">
+                        <span class="font-black uppercase tracking-widest text-[10px] block text-amber-500 mb-1.5">Weekly Scripture Highlight</span>
+                        <p class="text-amber-200/90 italic font-medium text-sm leading-relaxed">"${sched.verse || 'No verse assigned.'}"</p>
                     </div>
                 </div>
-                <button onclick="deleteData('monthly_schedules', ${sched.id})" class="admin-only bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0">Remove Entire Layout</button>
+                <button onclick="deleteData('monthly_schedules', ${sched.id})" class="admin-only bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer tracking-wider uppercase shrink-0 mt-2 lg:mt-0">Drop Configuration Layout</button>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-stone-200 bg-white/5 p-6 rounded-xl border border-white/5 mb-6">
-                <div class="p-3 bg-black/20 rounded-lg"><span class="block text-xs uppercase tracking-wider text-stone-400 mb-0.5">🎤 Worship Leader</span><strong class="text-white">${sched.worship_leader || 'Unassigned'}</strong></div>
-                <div class="p-3 bg-black/20 rounded-lg"><span class="block text-xs uppercase tracking-wider text-stone-400 mb-0.5">🎶 Back-up Singers</span><strong class="text-white">${sched.backup_singers || 'Unassigned'}</strong></div>
-                <div class="p-3 bg-black/20 rounded-lg"><span class="block text-xs uppercase tracking-wider text-stone-400 mb-0.5">🎸 Guitarist</span><strong class="text-white">${sched.guitar || 'Unassigned'}</strong></div>
-                <div class="p-3 bg-black/20 rounded-lg"><span class="block text-xs uppercase tracking-wider text-stone-400 mb-0.5">🎸 Bass Guitarist</span><strong class="text-white">${sched.bass || 'Unassigned'}</strong></div>
-                <div class="p-3 bg-black/20 rounded-lg"><span class="block text-xs uppercase tracking-wider text-stone-400 mb-0.5">🥁 Drummer</span><strong class="text-white">${sched.drummer || 'Unassigned'}</strong></div>
-                <div class="p-3 bg-black/20 rounded-lg"><span class="block text-xs uppercase tracking-wider text-stone-400 mb-0.5">🎹 Keyboardist</span><strong class="text-white">${sched.keyboard || 'Unassigned'}</strong></div>
-                <div class="p-3 bg-black/20 rounded-lg sm:col-span-2 md:col-span-3"><span class="block text-xs uppercase tracking-wider text-stone-400 mb-0.5">💻 Multimedia / Lyrics Operator</span><strong class="text-white">${sched.multimedia || 'Unassigned'}</strong></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-slate-200 bg-black/10 p-5 rounded-2xl border border-white/5 mb-6">
+                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">🎤 Worship Leader</span><strong class="text-white text-sm font-bold">${sched.worship_leader || 'Unassigned'}</strong></div>
+                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">🎶 Vocal Array Support</span><strong class="text-white text-sm font-bold">${sched.backup_singers || 'Unassigned'}</strong></div>
+                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">🎸 Lead Guitarist</span><strong class="text-white text-sm font-bold">${sched.guitar || 'Unassigned'}</strong></div>
+                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">🎸 Bassist Node</span><strong class="text-white text-sm font-bold">${sched.bass || 'Unassigned'}</strong></div>
+                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">🥁 Rhythm / Drums</span><strong class="text-white text-sm font-bold">${sched.drummer || 'Unassigned'}</strong></div>
+                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">🎹 Synthesizer / Keys</span><strong class="text-white text-sm font-bold">${sched.keyboard || 'Unassigned'}</strong></div>
+                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5 sm:col-span-2 lg:col-span-3"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">💻 Projection / Lyrics Operator</span><strong class="text-white text-sm font-bold">${sched.multimedia || 'Unassigned'}</strong></div>
             </div>
-            <button onclick="openEditScheduleModal(${sched.id}, \`${sched.sunday_week}\`, \`${(sched.verse || '').replace(/"/g, '&quot;')}\`, \`${(sched.worship_leader || '').replace(/"/g, '&quot;')}\`, \`${(sched.backup_singers || '').replace(/"/g, '&quot;')}\`, \`${(sched.guitar || '').replace(/"/g, '&quot;')}\`, \`${(sched.bass || '').replace(/"/g, '&quot;')}\`, \`${(sched.drummer || '').replace(/"/g, '&quot;')}\`, \`${(sched.keyboard || '').replace(/"/g, '&quot;')}\`, \`${(sched.multimedia || '').replace(/"/g, '&quot;')}\`)" class="admin-only bg-amber-500 hover:bg-amber-400 text-stone-950 px-5 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-amber-500/10 transition-all cursor-pointer">✏️ Edit Line-up Details</button>
+            <button onclick="openEditScheduleModal(${sched.id}, \`${sched.sunday_week}\`, \`${(sched.verse || '').replace(/"/g, '&quot;')}\`, \`${(sched.worship_leader || '').replace(/"/g, '&quot;')}\`, \`${(sched.backup_singers || '').replace(/"/g, '&quot;')}\`, \`${(sched.guitar || '').replace(/"/g, '&quot;')}\`, \`${(sched.bass || '').replace(/"/g, '&quot;')}\`, \`${(sched.drummer || '').replace(/"/g, '&quot;')}\`, \`${(sched.keyboard || '').replace(/"/g, '&quot;')}\`, \`${(sched.multimedia || '').replace(/"/g, '&quot;')}\`)" class="admin-only btn-glow-amber bg-amber-500 hover:bg-amber-400 text-[#090d16] px-5 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-amber-500/10 transition-all cursor-pointer uppercase tracking-wider">✏️ Mutate Line-up Configuration</button>
         `;
     }
 
@@ -174,17 +184,17 @@ async function fetchData(tab) {
         
         if (error) console.error(error);
         container.innerHTML = data?.map(item => `
-            <div class="premium-card flex flex-col items-center text-center group border border-white/10 hover:border-amber-500/40 transition-all">
-                <div class="w-28 h-28 overflow-hidden border-2 border-amber-500/30 rounded-full mb-3 shadow-inner bg-stone-900 shrink-0">
-                    <img src="${item.image_url || 'https://via.placeholder.com/200?text=No+Photo'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="Officer">
+            <div class="premium-card flex flex-col items-center text-center group transition-all duration-300">
+                <div class="w-24 h-24 overflow-hidden border-2 border-amber-500/40 rounded-full mb-3.5 shadow-md bg-slate-900 shrink-0 relative">
+                    <img src="${item.image_url || 'https://via.placeholder.com/200?text=No+Photo'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Officer">
                 </div>
-                <h3 class="font-bold text-lg text-white tracking-wide">${item.name}</h3>
-                <p class="text-amber-400 font-medium text-xs uppercase tracking-wider mt-1">${item.position}</p>
-                <div class="admin-only mt-4 flex gap-3 justify-center w-full border-t border-white/10 pt-3">
-                    <button onclick="openEditOfficerModal(${item.id}, '${item.name}', '${item.position}', '${item.image_url || ''}')" class="btn-edit text-xs">Edit</button>
-                    <button onclick="deleteData('church_officers', ${item.id})" class="btn-delete text-xs">Remove</button>
+                <h3 class="font-extrabold text-base tracking-wide line-clamp-1">${item.name}</h3>
+                <p class="font-black text-[10px] tracking-widest uppercase mt-1 bg-amber-500/5 px-3 py-0.5 rounded-full">${item.position}</p>
+                <div class="admin-only mt-4 flex gap-2 justify-center w-full border-t border-slate-200/60 pt-3">
+                    <button onclick="openEditOfficerModal(${item.id}, '${item.name}', '${item.position}', '${item.image_url || ''}')" class="btn-edit text-[10px] px-2.5 py-1.5">Edit</button>
+                    <button onclick="deleteData('church_officers', ${item.id})" class="btn-delete text-[10px] px-2.5 py-1.5">Remove</button>
                 </div>
-            </div>`).join('') || '<p class="text-stone-400 italic">No ministry leaders registered.</p>';
+            </div>`).join('') || '<div class="premium-card text-center py-6 text-slate-400 italic sm:col-span-2 lg:col-span-4">No ministry leaders registered in system nodes.</div>';
     }
 
     // 4. OFFICERS MEETINGS & PLANS
@@ -194,17 +204,17 @@ async function fetchData(tab) {
         
         if (error) console.error(error);
         container.innerHTML = data?.map(item => `
-            <div class="premium-card flex justify-between items-start gap-4 border border-white/5 hover:border-white/10">
-                <div class="flex-1">
-                    <span class="inline-block bg-white/5 border border-white/10 text-stone-300 text-[11px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider mb-2">📅 Date: ${item.meeting_date}</span>
-                    <h3 class="text-xl font-bold text-white tracking-wide">${item.title}</h3>
-                    <p class="text-stone-300 mt-2 text-sm leading-relaxed">${item.description || 'No descriptive items specified.'}</p>
+            <div class="premium-card flex flex-col justify-between items-start gap-4">
+                <div class="w-full">
+                    <span class="inline-block bg-white/5 border border-white/10 text-slate-300 text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest mb-3 shadow-inner">📅 Node Date: ${item.meeting_date}</span>
+                    <h3 class="text-xl font-extrabold text-white tracking-wide">${item.title}</h3>
+                    <p class="text-slate-400 mt-2 text-sm leading-relaxed font-medium">${item.description || 'No specific technical guidelines indexed.'}</p>
                 </div>
-                <div class="admin-only flex gap-3 ml-auto shrink-0">
+                <div class="admin-only flex gap-2.5 border-t border-white/5 pt-3.5 w-full justify-end shrink-0">
                     <button onclick="openEditMeetingModal(${item.id}, \`${item.title.replace(/"/g, '&quot;')}\`, '${item.meeting_date}', \`${(item.description || '').replace(/"/g, '&quot;')}\`)" class="btn-edit">Edit</button>
                     <button onclick="deleteData('officer_plans', ${item.id})" class="btn-delete">Remove</button>
                 </div>
-            </div>`).join('') || '<p class="text-stone-400 italic">No scheduled meetings found.</p>';
+            </div>`).join('') || '<div class="premium-card text-center py-6 text-slate-400 italic sm:col-span-2">No corporate strategy meetings logged.</div>';
     }
 
     // 5. PISO A DAY
@@ -213,17 +223,17 @@ async function fetchData(tab) {
         if (error) console.error(error);
         
         document.getElementById('piso-table-body').innerHTML = data?.map(item => `
-            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td class="p-4 pl-6 font-medium text-white">${item.member_name}</td>
-                <td class="p-4 text-emerald-400 font-bold tracking-wide">₱${item.amount.toLocaleString()}</td>
-                <td class="p-4 text-stone-400 text-sm">${item.date_recorded}</td>
+            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors font-medium">
+                <td class="p-4 pl-6 text-sm text-white">${item.member_name}</td>
+                <td class="p-4 text-emerald-400 font-extrabold tracking-wide text-sm">₱${item.amount.toLocaleString()}</td>
+                <td class="p-4 text-slate-400 text-xs tracking-wider">${item.date_recorded}</td>
                 <td class="admin-only p-4 text-center">
-                    <div class="flex gap-3 justify-center">
-                        <button onclick="openEditPisoModal(${item.id}, \`${item.member_name.replace(/"/g, '&quot;')}\`, ${item.amount}, '${item.date_recorded}')" class="btn-edit text-xs">Edit</button>
-                        <button onclick="deleteData('piso_a_day', ${item.id})" class="btn-delete text-xs">Remove</button>
+                    <div class="flex gap-2 justify-center">
+                        <button onclick="openEditPisoModal(${item.id}, \`${item.member_name.replace(/"/g, '&quot;')}\`, ${item.amount}, '${item.date_recorded}')" class="btn-edit text-[10px]">Edit</button>
+                        <button onclick="deleteData('piso_a_day', ${item.id})" class="btn-delete text-[10px]">Remove</button>
                     </div>
                 </td>
-            </tr>`).join('') || '<tr><td colspan="4" class="p-8 text-center text-stone-400 italic">No record entry ledgers found.</td></tr>';
+            </tr>`).join('') || '<tr><td colspan="4" class="p-8 text-center text-slate-400 italic text-sm font-medium">No record tracking databases discovered.</td></tr>';
     }
 
     // 6. EVENT SUGGESTIONS & VOTE POLLS
@@ -233,23 +243,25 @@ async function fetchData(tab) {
         
         if (error) console.error(error);
         container.innerHTML = data?.map(item => `
-            <div class="premium-card flex flex-col justify-between text-center border border-white/10 hover:border-white/20 transition-all">
+            <div class="premium-card flex flex-col justify-between text-center transition-all">
                 <div>
-                    <h3 class="text-xl font-bold text-white tracking-wide">${item.event_name}</h3>
-                    <p class="text-stone-300 text-sm mt-2 leading-relaxed">${item.description || 'No timeline description added.'}</p>
+                    <h3 class="text-xl font-extrabold text-white tracking-wide">${item.event_name}</h3>
+                    <p class="text-slate-400 text-xs mt-2 leading-relaxed font-medium line-clamp-3">${item.description || 'No concept brief provided.'}</p>
                 </div>
-                <div class="mt-4 bg-white/5 border border-white/10 p-4 rounded-xl">
-                    <span class="block text-3xl font-black text-amber-400 tracking-tight">${item.votes}</span>
-                    <span class="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1 block">Total Verified Votes</span>
-                </div>
-                <div class="mt-4 flex flex-col gap-2">
-                    <button onclick="voteEvent(${item.id}, ${item.votes})" class="w-full bg-amber-500 text-stone-950 py-2.5 rounded-lg text-xs hover:bg-amber-400 font-bold transition-all uppercase tracking-wider shadow-md">👍 Agree / cast vote</button>
-                    <div class="admin-only flex justify-center gap-3 mt-3 border-t border-white/10 pt-2 w-full">
-                        <button onclick="openEditPollModal(${item.id}, \`${item.event_name.replace(/"/g, '&quot;')}\`, \`${(item.description || '').replace(/"/g, '&quot;')}\`)" class="btn-edit text-xs">Edit</button>
-                        <button onclick="deleteData('event_polls', ${item.id})" class="btn-delete text-xs">Remove</button>
+                <div>
+                    <div class="my-4 bg-black/30 border border-white/5 p-4 rounded-xl shadow-inner group-hover:border-amber-500/10">
+                        <span class="block text-4xl font-black text-amber-400 tracking-tighter">${item.votes}</span>
+                        <span class="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1 block">Verified Assenting Votes</span>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="voteEvent(${item.id}, ${item.votes})" class="w-full bg-[#1e2538] border border-white/10 hover:border-amber-500/30 hover:bg-amber-500 hover:text-[#090d16] text-slate-200 py-2.5 rounded-xl text-xs font-extrabold transition-all uppercase tracking-wider cursor-pointer">👍 Affirm Proposition</button>
+                        <div class="admin-only flex justify-center gap-2 mt-2.5 border-t border-white/5 pt-2.5 w-full">
+                            <button onclick="openEditPollModal(${item.id}, \`${item.event_name.replace(/"/g, '&quot;')}\`, \`${(item.description || '').replace(/"/g, '&quot;')}\`)" class="btn-edit text-[10px]">Edit</button>
+                            <button onclick="deleteData('event_polls', ${item.id})" class="btn-delete text-[10px]">Remove</button>
+                        </div>
                     </div>
                 </div>
-            </div>`).join('') || '<p class="text-stone-400 italic">No open community planning polls active.</p>';
+            </div>`).join('') || '<p class="text-slate-400 italic text-sm text-center py-6 sm:col-span-2 lg:col-span-3">No collective proposal vectors running.</p>';
     }
 
     // 7. CHURCH FUNDS
@@ -258,18 +270,18 @@ async function fetchData(tab) {
         if (error) console.error(error);
         
         document.getElementById('funds-table-body').innerHTML = data?.map(item => `
-            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td class="p-4 pl-6 font-semibold text-white"><span class="inline-block px-2.5 py-0.5 text-xs rounded font-medium bg-stone-800 text-amber-300 border border-white/5">${item.type}</span></td>
-                <td class="p-4 text-emerald-400 font-bold tracking-wide">₱${item.amount.toLocaleString()}</td>
-                <td class="p-4 text-stone-400 text-sm">${item.date_recorded}</td>
-                <td class="p-4 text-stone-300 text-sm italic">${item.remarks || '—'}</td>
+            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors font-medium">
+                <td class="p-4 pl-6 text-xs font-black"><span class="inline-block px-3 py-1 rounded-md bg-[#131724] text-amber-400 border border-white/5 shadow-inner uppercase tracking-wider">${item.type}</span></td>
+                <td class="p-4 text-emerald-400 font-extrabold tracking-wide text-sm">₱${item.amount.toLocaleString()}</td>
+                <td class="p-4 text-slate-400 text-xs tracking-wider">${item.date_recorded}</td>
+                <td class="p-4 text-slate-300 text-xs italic font-normal max-w-xs truncate">${item.remarks || '—'}</td>
                 <td class="admin-only p-4 text-center">
-                    <div class="flex gap-3 justify-center">
-                        <button onclick="openEditFundModal(${item.id}, '${item.type}', ${item.amount}, '${item.date_recorded}', \`${(item.remarks || '').replace(/"/g, '&quot;')}\`)" class="btn-edit text-xs">Edit</button>
-                        <button onclick="deleteData('church_funds', ${item.id})" class="btn-delete text-xs">Remove</button>
+                    <div class="flex gap-2 justify-center">
+                        <button onclick="openEditFundModal(${item.id}, '${item.type}', ${item.amount}, '${item.date_recorded}', \`${(item.remarks || '').replace(/"/g, '&quot;')}\`)" class="btn-edit text-[10px]">Edit</button>
+                        <button onclick="deleteData('church_funds', ${item.id})" class="btn-delete text-[10px]">Remove</button>
                     </div>
                 </td>
-            </tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-stone-400 italic">No financial database logs registered.</td></tr>';
+            </tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-400 italic text-sm font-medium">No ledger operational matrices discovered.</td></tr>';
     }
     
     applyPermissions();
@@ -339,7 +351,7 @@ function openModal(mode) {
     const fields = document.getElementById('modal-fields');
     modal.classList.remove('hidden');
 
-    const inputClass = "w-full p-3 border border-stone-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500 bg-stone-900 text-white placeholder-stone-500 text-sm transition-all";
+    const inputClass = "w-full p-3.5 border border-white/10 rounded-xl focus:outline-none focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/10 bg-black/20 text-white placeholder-slate-500 text-sm transition-all duration-300";
 
     if (mode === 'announcement') {
         document.getElementById('modal-title').innerText = "Create New Announcement";
@@ -493,17 +505,17 @@ function openEditScheduleModal(id, currentSunday, verse, wl, backup, guitar, bas
     modal.classList.remove('hidden');
     document.getElementById('modal-title').innerText = `Update ${currentSunday} Line-up`;
 
-    const inputClass = "w-full p-2 border border-stone-700 rounded-lg bg-stone-900 text-white placeholder-stone-500 text-xs focus:outline-none focus:ring-1 focus:ring-amber-500";
+    const inputClass = "w-full p-2.5 border border-white/10 rounded-lg bg-black/20 text-white placeholder-stone-500 text-xs focus:outline-none focus:border-amber-500/40";
     
     fields.innerHTML = `
-        <div><label class="text-[10px] text-stone-400 font-bold block mb-1">Weekly Verse Highlight</label><input type="text" id="e-verse" class="${inputClass}" value="${verse}"></div>
-        <div><label class="text-[10px] text-stone-400 font-bold block mb-1">Worship Leader</label><input type="text" id="e-wl" class="${inputClass}" value="${wl}"></div>
-        <div><label class="text-[10px] text-stone-400 font-bold block mb-1">Backup Singers</label><input type="text" id="e-backup" class="${inputClass}" value="${backup}"></div>
-        <div><label class="text-[10px] text-stone-400 font-bold block mb-1">Guitarist</label><input type="text" id="e-guitar" class="${inputClass}" value="${guitar}"></div>
-        <div><label class="text-[10px] text-stone-400 font-bold block mb-1">Bass Player</label><input type="text" id="e-bass" class="${inputClass}" value="${bass}"></div>
-        <div><label class="text-[10px] text-stone-400 font-bold block mb-1">Drummer</label><input type="text" id="e-drum" class="${inputClass}" value="${drummer}"></div>
-        <div><label class="text-[10px] text-stone-400 font-bold block mb-1">Keyboardist</label><input type="text" id="e-key" class="${inputClass}" value="${keyboard}"></div>
-        <div><label class="text-[10px] text-stone-400 font-bold block mb-1">Multimedia Operator</label><input type="text" id="e-multi" class="${inputClass}" value="${multimedia}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Weekly Verse Highlight</label><input type="text" id="e-verse" class="${inputClass}" value="${verse}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Worship Leader</label><input type="text" id="e-wl" class="${inputClass}" value="${wl}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Backup Singers</label><input type="text" id="e-backup" class="${inputClass}" value="${backup}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Guitarist</label><input type="text" id="e-guitar" class="${inputClass}" value="${guitar}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Bass Player</label><input type="text" id="e-bass" class="${inputClass}" value="${bass}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Drummer</label><input type="text" id="e-drum" class="${inputClass}" value="${drummer}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Keyboardist</label><input type="text" id="e-key" class="${inputClass}" value="${keyboard}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Multimedia Operator</label><input type="text" id="e-multi" class="${inputClass}" value="${multimedia}"></div>
     `;
 
     document.getElementById('modal-save-btn').onclick = async () => {
