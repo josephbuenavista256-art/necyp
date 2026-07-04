@@ -19,12 +19,12 @@ function handleDbResponse(error, successMessage, callback) {
 }
 
 // ==========================================
-// CORE NAVIGATION & PERMISSIONS (WITH TAB ANIMATIONS)
+// CORE NAVIGATION & PERMISSIONS (WITH PREMIUM SMOOTH EASING)
 // ==========================================
 function switchTab(tabName) {
     const allTabs = document.querySelectorAll('.tab-content');
     
-    // Smooth transition pipeline sequence
+    // Smooth transition pipeline layout
     allTabs.forEach(el => {
         el.classList.remove('tab-active');
         el.classList.add('hidden');
@@ -33,12 +33,12 @@ function switchTab(tabName) {
     const targetTab = document.getElementById(`tab-${tabName}`);
     if (targetTab) {
         targetTab.classList.remove('hidden');
-        // Force Reflow mechanism to trigger clean browser CSS transitions smoothly
+        // Force Reflow sequence execution to cleanly reset modern transformations
         void targetTab.offsetWidth; 
         targetTab.classList.add('tab-active');
     }
     
-    // Update active state navigation highlighting
+    // Update active state navigation highlighting with luxury sliding styles
     document.querySelectorAll('[data-tab]').forEach(btn => {
         if (btn.getAttribute('data-tab') === tabName) {
             btn.classList.add('bg-amber-500/10', 'text-amber-400', 'border-l-4', 'border-amber-500', 'pl-6');
@@ -81,20 +81,20 @@ function applyPermissions() {
 }
 
 // ==========================================
-// AUTHENTICATION SYSTEM
+// SYSTEM ACCESS SECURITY AUTH
 // ==========================================
 async function login() {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
     
     if (!email || !password) {
-        alert("Please fill in both email and password fields.");
+        alert("Please completely supply authentication strings.");
         return;
     }
 
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
-        alert("Invalid login details: " + error.message);
+        alert("Invalid login strings: " + error.message);
     } else {
         toggleViewMode(false);
     }
@@ -111,7 +111,7 @@ function logout() {
 }
 
 // ==========================================
-// FETCH DATA & RENDERER ENGINE
+// FETCH REPOSITORY MODULES & STRUCTURAL RENDERERS
 // ==========================================
 async function fetchData(tab) {
     // 1. ANNOUNCEMENTS
@@ -130,10 +130,10 @@ async function fetchData(tab) {
                     <button onclick="openEditModal('announcement', ${item.id}, \`${item.title.replace(/"/g, '&quot;')}\`, \`${item.content.replace(/"/g, '&quot;')}\`)" class="btn-edit">Edit</button>
                     <button onclick="deleteData('announcements', ${item.id})" class="btn-delete">Remove</button>
                 </div>
-            </div>`).join('') || '<div class="premium-card text-center py-6 text-slate-400 italic">No announcements posted yet in this dynamic repository.</div>';
+            </div>`).join('') || '<div class="premium-card text-center py-6 text-slate-400 italic">No announcements mapped to this relational node.</div>';
     }
 
-    // 2. WEEKLY LAYOUT SCHEDULES
+    // 2. TIMELINE SCHEDULE METRICS
     if (tab === 'schedule') {
         const selectedSunday = document.getElementById('sunday-filter').value;
         let { data, error } = await supabaseClient.from('monthly_schedules').select('*').eq('sunday_week', selectedSunday);
@@ -145,7 +145,7 @@ async function fetchData(tab) {
             container.innerHTML = `
                 <div class="text-center py-12 premium-card border border-dashed border-white/10">
                     <p class="text-slate-400 italic text-sm">No configuration timeline layout assigned for <b class="text-amber-400">${selectedSunday}</b>.</p>
-                    <button onclick="setupCustomSunday('${selectedSunday}')" class="admin-only btn-glow-amber mt-5 bg-amber-500 text-[#090d16] px-5 py-2.5 rounded-xl text-xs font-black hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/10 cursor-pointer uppercase tracking-wider">+ Create Template For This Week</button>
+                    <button onclick="setupCustomSunday('${selectedSunday}')" class="admin-only btn-premium-shimmer text-[#090d16] mt-5 px-5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider">+ Create Template For This Week</button>
                 </div>
             `;
             applyPermissions();
@@ -156,7 +156,7 @@ async function fetchData(tab) {
         container.innerHTML = `
             <div class="flex flex-col lg:flex-row justify-between items-start gap-4 border-b border-white/5 pb-5 mb-6">
                 <div class="flex-1 w-full">
-                    <h3 class="text-2xl font-black text-amber-400 tracking-wide">${sched.sunday_week} Configuration</h3>
+                    <h3 class="text-2xl font-black text-amber-400 tracking-wide">${sched.sunday_week} Configuration Matrix</h3>
                     <div class="bg-amber-500/5 p-4 rounded-xl my-4 border border-amber-500/20 max-w-3xl">
                         <span class="font-black uppercase tracking-widest text-[10px] block text-amber-500 mb-1.5">Weekly Scripture Highlight</span>
                         <p class="text-amber-200/90 italic font-medium text-sm leading-relaxed">"${sched.verse || 'No verse assigned.'}"</p>
@@ -173,11 +173,11 @@ async function fetchData(tab) {
                 <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">🎹 Synthesizer / Keys</span><strong class="text-white text-sm font-bold">${sched.keyboard || 'Unassigned'}</strong></div>
                 <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5 sm:col-span-2 lg:col-span-3"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">💻 Projection / Lyrics Operator</span><strong class="text-white text-sm font-bold">${sched.multimedia || 'Unassigned'}</strong></div>
             </div>
-            <button onclick="openEditScheduleModal(${sched.id}, \`${sched.sunday_week}\`, \`${(sched.verse || '').replace(/"/g, '&quot;')}\`, \`${(sched.worship_leader || '').replace(/"/g, '&quot;')}\`, \`${(sched.backup_singers || '').replace(/"/g, '&quot;')}\`, \`${(sched.guitar || '').replace(/"/g, '&quot;')}\`, \`${(sched.bass || '').replace(/"/g, '&quot;')}\`, \`${(sched.drummer || '').replace(/"/g, '&quot;')}\`, \`${(sched.keyboard || '').replace(/"/g, '&quot;')}\`, \`${(sched.multimedia || '').replace(/"/g, '&quot;')}\`)" class="admin-only btn-glow-amber bg-amber-500 hover:bg-amber-400 text-[#090d16] px-5 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-amber-500/10 transition-all cursor-pointer uppercase tracking-wider">✏️ Mutate Line-up Configuration</button>
+            <button onclick="openEditScheduleModal(${sched.id}, \`${sched.sunday_week}\`, \`${(sched.verse || '').replace(/"/g, '&quot;')}\`, \`${(sched.worship_leader || '').replace(/"/g, '&quot;')}\`, \`${(sched.backup_singers || '').replace(/"/g, '&quot;')}\`, \`${(sched.guitar || '').replace(/"/g, '&quot;')}\`, \`${(sched.bass || '').replace(/"/g, '&quot;')}\`, \`${(sched.drummer || '').replace(/"/g, '&quot;')}\`, \`${(sched.keyboard || '').replace(/"/g, '&quot;')}\`, \`${(sched.multimedia || '').replace(/"/g, '&quot;')}\`)" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider">✏️ Mutate Line-up Configuration</button>
         `;
     }
 
-    // 3. CHURCH OFFICERS
+    // 3. CHURCH REPRESENTATIVES
     if (tab === 'officers-list') {
         let { data, error } = await supabaseClient.from('church_officers').select('*').order('created_at', { ascending: true });
         let container = document.getElementById('officers-grid');
@@ -194,10 +194,10 @@ async function fetchData(tab) {
                     <button onclick="openEditOfficerModal(${item.id}, '${item.name}', '${item.position}', '${item.image_url || ''}')" class="btn-edit text-[10px] px-2.5 py-1.5">Edit</button>
                     <button onclick="deleteData('church_officers', ${item.id})" class="btn-delete text-[10px] px-2.5 py-1.5">Remove</button>
                 </div>
-            </div>`).join('') || '<div class="premium-card text-center py-6 text-slate-400 italic sm:col-span-2 lg:col-span-4">No ministry leaders registered in system nodes.</div>';
+            </div>`).join('') || '<div class="premium-card text-center py-6 text-slate-400 italic sm:col-span-2 lg:col-span-4">No executive profiles deployed inside the cluster.</div>';
     }
 
-    // 4. OFFICERS MEETINGS & PLANS
+    // 4. STRATEGIC COUNCIL MEETINGS
     if (tab === 'officers-meetings') {
         let { data, error } = await supabaseClient.from('officer_plans').select('*').order('meeting_date', { ascending: false });
         let container = document.getElementById('meetings-list');
@@ -208,16 +208,16 @@ async function fetchData(tab) {
                 <div class="w-full">
                     <span class="inline-block bg-white/5 border border-white/10 text-slate-300 text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest mb-3 shadow-inner">📅 Node Date: ${item.meeting_date}</span>
                     <h3 class="text-xl font-extrabold text-white tracking-wide">${item.title}</h3>
-                    <p class="text-slate-400 mt-2 text-sm leading-relaxed font-medium">${item.description || 'No specific technical guidelines indexed.'}</p>
+                    <p class="text-slate-400 mt-2 text-sm leading-relaxed font-medium">${item.description || 'No descriptive logic documentation mapped.'}</p>
                 </div>
                 <div class="admin-only flex gap-2.5 border-t border-white/5 pt-3.5 w-full justify-end shrink-0">
                     <button onclick="openEditMeetingModal(${item.id}, \`${item.title.replace(/"/g, '&quot;')}\`, '${item.meeting_date}', \`${(item.description || '').replace(/"/g, '&quot;')}\`)" class="btn-edit">Edit</button>
                     <button onclick="deleteData('officer_plans', ${item.id})" class="btn-delete">Remove</button>
                 </div>
-            </div>`).join('') || '<div class="premium-card text-center py-6 text-slate-400 italic sm:col-span-2">No corporate strategy meetings logged.</div>';
+            </div>`).join('') || '<div class="premium-card text-center py-6 text-slate-400 italic sm:col-span-2">No meeting data vectors recorded.</div>';
     }
 
-    // 5. PISO A DAY
+    // 5. MICRO-COLLECTION PISO TRACKER
     if (tab === 'piso-day') {
         let { data, error } = await supabaseClient.from('piso_a_day').select('*').order('date_recorded', { ascending: false });
         if (error) console.error(error);
@@ -233,10 +233,10 @@ async function fetchData(tab) {
                         <button onclick="deleteData('piso_a_day', ${item.id})" class="btn-delete text-[10px]">Remove</button>
                     </div>
                 </td>
-            </tr>`).join('') || '<tr><td colspan="4" class="p-8 text-center text-slate-400 italic text-sm font-medium">No record tracking databases discovered.</td></tr>';
+            </tr>`).join('') || '<tr><td colspan="4" class="p-8 text-center text-slate-400 italic text-sm font-medium">No ledger lines allocated inside the module.</td></tr>';
     }
 
-    // 6. EVENT SUGGESTIONS & VOTE POLLS
+    // 6. PROPOSALS & ELECTIONS
     if (tab === 'polls') {
         let { data, error } = await supabaseClient.from('event_polls').select('*').order('created_at', { ascending: false });
         let container = document.getElementById('polls-list');
@@ -246,7 +246,7 @@ async function fetchData(tab) {
             <div class="premium-card flex flex-col justify-between text-center transition-all">
                 <div>
                     <h3 class="text-xl font-extrabold text-white tracking-wide">${item.event_name}</h3>
-                    <p class="text-slate-400 text-xs mt-2 leading-relaxed font-medium line-clamp-3">${item.description || 'No concept brief provided.'}</p>
+                    <p class="text-slate-400 text-xs mt-2 leading-relaxed font-medium line-clamp-3">${item.description || 'No concept description supplied.'}</p>
                 </div>
                 <div>
                     <div class="my-4 bg-black/30 border border-white/5 p-4 rounded-xl shadow-inner group-hover:border-amber-500/10">
@@ -261,10 +261,10 @@ async function fetchData(tab) {
                         </div>
                     </div>
                 </div>
-            </div>`).join('') || '<p class="text-slate-400 italic text-sm text-center py-6 sm:col-span-2 lg:col-span-3">No collective proposal vectors running.</p>';
+            </div>`).join('') || '<p class="text-slate-400 italic text-sm text-center py-6 sm:col-span-2 lg:col-span-3">No active event layouts proposed.</p>';
     }
 
-    // 7. CHURCH FUNDS
+    // 7. FINANCIAL ACCOUNTING
     if (tab === 'funds') {
         let { data, error } = await supabaseClient.from('church_funds').select('*').order('date_recorded', { ascending: false });
         if (error) console.error(error);
@@ -281,21 +281,21 @@ async function fetchData(tab) {
                         <button onclick="deleteData('church_funds', ${item.id})" class="btn-delete text-[10px]">Remove</button>
                     </div>
                 </td>
-            </tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-400 italic text-sm font-medium">No ledger operational matrices discovered.</td></tr>';
+            </tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-400 italic text-sm font-medium">No transparent ledger balance sheets detected.</td></tr>';
     }
     
     applyPermissions();
 }
 
 // ==========================================
-// OPERATIONAL ENGINES (VOTE, SYSTEM, DELETE)
+// SYSTEM OPERATIONAL ACTIONS (VOTE, SYSTEM MUTATION)
 // ==========================================
 async function deleteData(table, id) {
     if (!isAdmin) {
-        alert("Access Denied: Only logged-in administrators can delete data.");
+        alert("Access Denied: Administrative security level required.");
         return;
     }
-    if (confirm("Are you sure you want to remove or delete this permanently from the database?")) {
+    if (confirm("Confirm database row drop sequence? This action cannot be reversed.")) {
         const { error } = await supabaseClient.from(table).delete().eq('id', id);
         
         let targetTab = table === 'piso_a_day' ? 'piso-day' : 
@@ -305,7 +305,7 @@ async function deleteData(table, id) {
                         (table === 'event_polls' ? 'polls' : 
                         (table === 'church_funds' ? 'funds' : table)))));
 
-        handleDbResponse(error, "Record successfully removed!", () => {
+        handleDbResponse(error, "Record removed from server nodes.", () => {
             fetchData(targetTab);
         });
     }
@@ -320,22 +320,22 @@ async function voteEvent(id, currentVotes) {
 
 async function setupCustomSunday(weekName) {
     if (!isAdmin) {
-        alert("Access Denied: Only logged-in administrators can create layouts.");
+        alert("Access Denied: Administrative clearance required.");
         return;
     }
     const { error } = await supabaseClient.from('monthly_schedules').insert([{ 
         sunday_week: weekName, 
-        verse: "Psalm 104:33 - I will sing to the Lord as long as I live...", 
+        verse: "Psalm 100:2 - Worship the Lord with gladness; come before him with joyful songs.", 
         worship_leader: "", backup_singers: "", guitar: "", bass: "", drummer: "", keyboard: "", multimedia: "" 
     }]);
 
-    handleDbResponse(error, "Template initialized successfully!", () => {
+    handleDbResponse(error, "Weekly layout initialized cleanly.", () => {
         fetchData('schedule');
     });
 }
 
 // ==========================================
-// MODAL ENGINE (OPEN & CLOSE)
+// FORM OVERLAY SYSTEM CONTROLLERS (MODALS)
 // ==========================================
 function closeModal() {
     document.getElementById('generic-modal').classList.add('hidden');
@@ -344,7 +344,7 @@ function closeModal() {
 
 function openModal(mode) {
     if (!isAdmin) {
-        alert("Access Denied: Only logged-in administrators can modify content.");
+        alert("Access Denied: Missing operational credentials.");
         return;
     }
     const modal = document.getElementById('generic-modal');
@@ -364,7 +364,7 @@ function openModal(mode) {
                 title: document.getElementById('f-title').value, 
                 content: document.getElementById('f-content').value 
             }]);
-            handleDbResponse(error, "Announcement created successfully!", () => {
+            handleDbResponse(error, "Announcement distributed to network.", () => {
                 closeModal(); 
                 fetchData('announcements');
             });
@@ -384,7 +384,7 @@ function openModal(mode) {
                 position: document.getElementById('f-off-pos').value, 
                 image_url: document.getElementById('f-off-img').value 
             }]);
-            handleDbResponse(error, "Officer added successfully!", () => {
+            handleDbResponse(error, "Representative profile established.", () => {
                 closeModal(); 
                 fetchData('officers-list');
             });
@@ -404,7 +404,7 @@ function openModal(mode) {
                 meeting_date: document.getElementById('f-meet-date').value, 
                 description: document.getElementById('f-meet-desc').value 
             }]);
-            handleDbResponse(error, "Meeting plan saved!", () => {
+            handleDbResponse(error, "Council logging synchronized.", () => {
                 closeModal(); 
                 fetchData('officers-meetings');
             });
@@ -424,7 +424,7 @@ function openModal(mode) {
                 amount: parseFloat(document.getElementById('f-piso-amt').value || 0), 
                 date_recorded: document.getElementById('f-piso-date').value 
             }]);
-            handleDbResponse(error, "Piso record saved to database!", () => {
+            handleDbResponse(error, "Contribution tracked inside ledger nodes.", () => {
                 closeModal(); 
                 fetchData('piso-day');
             });
@@ -443,7 +443,7 @@ function openModal(mode) {
                 description: document.getElementById('f-poll-desc').value,
                 votes: 0
             }]);
-            handleDbResponse(error, "Event suggestion published!", () => {
+            handleDbResponse(error, "Proposition deployed to public stream.", () => {
                 closeModal(); 
                 fetchData('polls');
             });
@@ -470,7 +470,7 @@ function openModal(mode) {
                 date_recorded: document.getElementById('f-fund-date').value,
                 remarks: document.getElementById('f-fund-rem').value
             }]);
-            handleDbResponse(error, "Transaction logged transparently!", () => {
+            handleDbResponse(error, "Financial matrix balance synchronized.", () => {
                 closeModal(); 
                 fetchData('funds');
             });
@@ -479,11 +479,11 @@ function openModal(mode) {
 }
 
 // ==========================================
-// DYNAMIC EDIT OVERLAY MODAL SETUPS
+// DYNAMIC COMPONENT UPDATE SYSTEMS (EDITORS)
 // ==========================================
 function openEditModal(mode, id, oldTitle, oldContent) {
     openModal(mode);
-    document.getElementById('modal-title').innerText = "Update Announcement";
+    document.getElementById('modal-title').innerText = "Update Announcement Parameters";
     document.getElementById('f-title').value = oldTitle;
     document.getElementById('f-content').value = oldContent;
     document.getElementById('modal-save-btn').onclick = async () => {
@@ -491,7 +491,7 @@ function openEditModal(mode, id, oldTitle, oldContent) {
             title: document.getElementById('f-title').value, 
             content: document.getElementById('f-content').value 
         }).eq('id', id);
-        handleDbResponse(error, "Announcement updated cleanly!", () => {
+        handleDbResponse(error, "Announcement updated cleanly.", () => {
             closeModal(); 
             fetchData('announcements');
         });
@@ -499,11 +499,11 @@ function openEditModal(mode, id, oldTitle, oldContent) {
 }
 
 function openEditScheduleModal(id, currentSunday, verse, wl, backup, guitar, bass, drummer, keyboard, multimedia) {
-    if (!isAdmin) return alert("Admin login required.");
+    if (!isAdmin) return alert("Clearance required.");
     const modal = document.getElementById('generic-modal');
     const fields = document.getElementById('modal-fields');
     modal.classList.remove('hidden');
-    document.getElementById('modal-title').innerText = `Update ${currentSunday} Line-up`;
+    document.getElementById('modal-title').innerText = `Update ${currentSunday} Layout`;
 
     const inputClass = "w-full p-2.5 border border-white/10 rounded-lg bg-black/20 text-white placeholder-stone-500 text-xs focus:outline-none focus:border-amber-500/40";
     
@@ -530,7 +530,7 @@ function openEditScheduleModal(id, currentSunday, verse, wl, backup, guitar, bas
             multimedia: document.getElementById('e-multi').value
         }).eq('id', id);
 
-        handleDbResponse(error, "Praise team timeline updated directly!", () => {
+        handleDbResponse(error, "Ministerial group layout altered directly.", () => {
             closeModal();
             fetchData('schedule');
         });
@@ -539,7 +539,7 @@ function openEditScheduleModal(id, currentSunday, verse, wl, backup, guitar, bas
 
 function openEditOfficerModal(id, oldName, oldPos, oldImg) {
     openModal('officer-rep');
-    document.getElementById('modal-title').innerText = "Edit Church Officer";
+    document.getElementById('modal-title').innerText = "Edit Church Officer Settings";
     document.getElementById('f-off-name').value = oldName;
     document.getElementById('f-off-pos').value = oldPos;
     document.getElementById('f-off-img').value = oldImg;
@@ -549,7 +549,7 @@ function openEditOfficerModal(id, oldName, oldPos, oldImg) {
             position: document.getElementById('f-off-pos').value, 
             image_url: document.getElementById('f-off-img').value 
         }).eq('id', id);
-        handleDbResponse(error, "Officer configuration saved!", () => {
+        handleDbResponse(error, "Profile modifications recorded.", () => {
             closeModal(); 
             fetchData('officers-list');
         });
@@ -568,7 +568,7 @@ function openEditMeetingModal(id, oldTitle, oldDate, oldDesc) {
             meeting_date: document.getElementById('f-meet-date').value, 
             description: document.getElementById('f-meet-desc').value 
         }).eq('id', id);
-        handleDbResponse(error, "Meeting adjustments finalized!", () => {
+        handleDbResponse(error, "Meeting logging variables modified.", () => {
             closeModal(); 
             fetchData('officers-meetings');
         });
@@ -577,7 +577,7 @@ function openEditMeetingModal(id, oldTitle, oldDate, oldDesc) {
 
 function openEditPisoModal(id, oldName, oldAmt, oldDate) {
     openModal('piso');
-    document.getElementById('modal-title').innerText = "Edit Piso Record";
+    document.getElementById('modal-title').innerText = "Edit Piso Balance Line";
     document.getElementById('f-piso-name').value = oldName;
     document.getElementById('f-piso-amt').value = oldAmt;
     document.getElementById('f-piso-date').value = oldDate;
@@ -587,7 +587,7 @@ function openEditPisoModal(id, oldName, oldAmt, oldDate) {
             amount: parseFloat(document.getElementById('f-piso-amt').value || 0), 
             date_recorded: document.getElementById('f-piso-date').value 
         }).eq('id', id);
-        handleDbResponse(error, "Piso ledger row updated successfully!", () => {
+        handleDbResponse(error, "Piso collection balance row modified.", () => {
             closeModal(); 
             fetchData('piso-day');
         });
@@ -596,7 +596,7 @@ function openEditPisoModal(id, oldName, oldAmt, oldDate) {
 
 function openEditPollModal(id, oldName, oldDesc) {
     openModal('poll');
-    document.getElementById('modal-title').innerText = "Edit Event Suggestion";
+    document.getElementById('modal-title').innerText = "Edit Event Settings";
     document.getElementById('f-poll-name').value = oldName;
     document.getElementById('f-poll-desc').value = oldDesc;
     document.getElementById('modal-save-btn').onclick = async () => {
@@ -604,7 +604,7 @@ function openEditPollModal(id, oldName, oldDesc) {
             event_name: document.getElementById('f-poll-name').value, 
             description: document.getElementById('f-poll-desc').value 
         }).eq('id', id);
-        handleDbResponse(error, "Poll criteria altered cleanly!", () => {
+        handleDbResponse(error, "Proposition properties calibrated cleanly.", () => {
             closeModal(); 
             fetchData('polls');
         });
@@ -613,7 +613,7 @@ function openEditPollModal(id, oldName, oldDesc) {
 
 function openEditFundModal(id, oldType, oldAmt, oldDate, oldRem) {
     openModal('fund');
-    document.getElementById('modal-title').innerText = "Edit Fund Transaction";
+    document.getElementById('modal-title').innerText = "Edit Fund Row Properties";
     document.getElementById('f-fund-type').value = oldType;
     document.getElementById('f-fund-amt').value = oldAmt;
     document.getElementById('f-fund-date').value = oldDate;
@@ -625,7 +625,7 @@ function openEditFundModal(id, oldType, oldAmt, oldDate, oldRem) {
             date_recorded: document.getElementById('f-fund-date').value, 
             remarks: document.getElementById('f-fund-rem').value 
         }).eq('id', id);
-        handleDbResponse(error, "Financial history adjustment synced!", () => {
+        handleDbResponse(error, "Financial matrix audit line adjusted.", () => {
             closeModal(); 
             fetchData('funds');
         });
@@ -633,7 +633,7 @@ function openEditFundModal(id, oldType, oldAmt, oldDate, oldRem) {
 }
 
 // ==========================================
-// BIND ALL FUNCTIONS TO GLOBAL WINDOW OBJECT
+// EXPEDITE WINDOW SCOPE REGISTRATIONS
 // ==========================================
 window.switchTab = switchTab;
 window.toggleViewMode = toggleViewMode;
