@@ -102,27 +102,24 @@ function applyPermissions() {
 // SYSTEM ACCESS SECURITY AUTH
 // ==========================================
 async function login() {
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
+    // RESTORED: Fixed IDs to look for 'email' and 'password' matching index.html
+    const emailField = document.getElementById('email');
+    const passwordField = document.getElementById('password');
+    
+    if (!emailField || !passwordField) {
+        alert("Authentication DOM elements missing.");
+        return;
+    }
+
+    const email = emailField.value;
+    const password = passwordField.value;
     
     if (!email || !password) {
         alert("Please completely supply authentication strings.");
         return;
     }
 
-    let response;
-    
-    // Fallback architecture to automatically handle both Supabase v1 and v2 methods safely
-    if (typeof supabaseClient.auth.signInWithPassword === 'function') {
-        response = await supabaseClient.auth.signInWithPassword({ email, password });
-    } else if (typeof supabaseClient.auth.signIn === 'function') {
-        response = await supabaseClient.auth.signIn({ email, password });
-    } else {
-        alert("❌ Authentication configuration mismatch. Please verify your Supabase library injection.");
-        return;
-    }
-
-    const { data, error } = response;
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
         alert("Invalid login strings: " + error.message);
     } else {
@@ -136,8 +133,9 @@ function logout() {
     document.getElementById('app-container').classList.add('hidden');
     document.getElementById('auth-container').classList.remove('hidden');
     
-    document.getElementById('login-email').value = '';
-    document.getElementById('login-password').value = '';
+    // RESTORED: Clears the correct input IDs upon logout
+    if (document.getElementById('email')) document.getElementById('email').value = '';
+    if (document.getElementById('password')) document.getElementById('password').value = '';
 }
 
 // ==========================================
