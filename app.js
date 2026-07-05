@@ -1,7 +1,7 @@
 // ==========================================
 // CONFIGURATION & INITIALIZATION
 // ==========================================
-const SUPABASE_URL = "https://nbcuzewrgdfdaiowbovc.supabase.co/rest/v1/";
+const SUPABASE_URL = "https://nbcuzewrgdfdaiowbovc.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_xVZvbjf4t0vRSZCWluJlag_VAURlr6h";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
