@@ -83,6 +83,7 @@
                         background-color 0.4s var(--premium-bezier);
             transform-origin: center;
         }
+        /* Border expansion glow and subtle 3D scale on focus */
         .premium-input-group input:focus {
             border-color: rgba(245, 158, 11, 0.7) !important;
             box-shadow: 0 0 25px rgba(245, 158, 11, 0.25), inset 0 0 0 1px rgba(245, 158, 11, 0.5) !important;
@@ -189,17 +190,17 @@
             box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
         }
 
-        /* Church Representatives Premium Cards Dark Harmonization */
+        /* Church Representatives Premium Cards Light Harmonization */
         #officers-grid > div {
-            background: rgba(15, 23, 42, 0.65) !important; 
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            color: #f1f5f9 !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+            background: rgba(255, 255, 255, 0.98) !important; 
+            border: 1px solid rgba(255, 255, 255, 1) !important;
+            color: #0f172a !important;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4) !important;
         }
-        #officers-grid > div h3 { color: #ffffff !important; }
-        #officers-grid > div p { color: #fbbf24 !important; font-weight: 700; }
+        #officers-grid > div h3 { color: #0f172a !important; }
+        #officers-grid > div p { color: #b45309 !important; }
+        #officers-grid > div .btn-edit { border-color: rgba(245, 158, 11, 0.4) !important; }
+        #officers-grid > div .btn-delete { border-color: rgba(239, 68, 68, 0.3) !important; }
 
         /* Smooth Custom Layout Scrollbars */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -238,15 +239,15 @@
                 
                 <div class="flex flex-col gap-4">
                     <div class="premium-input-group">
-                        <input type="email" id="login-email" placeholder=" " 
+                        <input type="email" id="email" placeholder=" " 
                                class="w-full p-4 pt-5 pb-3 border border-white/10 rounded-xl focus:outline-none bg-black/20 text-white text-sm">
-                        <label for="login-email">Email Address</label>
+                        <label for="email">Email Address</label>
                     </div>
                     
                     <div class="premium-input-group">
-                        <input type="password" id="login-password" placeholder=" " 
+                        <input type="password" id="password" placeholder=" " 
                                class="w-full p-4 pt-5 pb-3 border border-white/10 rounded-xl focus:outline-none bg-black/20 text-white text-sm">
-                        <label for="login-password">Password</label>
+                        <label for="password">Password</label>
                     </div>
                     
                     <button onclick="login()" class="btn-premium-shimmer w-full text-[#090d16] p-4 rounded-xl font-black cursor-pointer text-xs uppercase tracking-wider mt-2">
@@ -271,6 +272,7 @@
 
     <div id="app-container" class="min-h-screen flex flex-col lg:flex-row hidden bg-cover bg-center bg-no-repeat relative bg-fixed" style="background-image: url('churchlogo.png.jpg');">
         <div class="absolute inset-0 bg-[#040610]/92 pointer-events-none backdrop-blur-sm"></div>
+
         <header class="lg:hidden w-full bg-[#07090f]/90 backdrop-blur-md border-b border-white/5 p-4 flex justify-between items-center sticky top-0 z-40 shadow-xl">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 overflow-hidden rounded-full border border-amber-500/20">
@@ -295,133 +297,94 @@
                     <h1 class="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">NEC PORTAL</h1>
                     <p class="text-[9px] text-amber-400 font-black tracking-[0.3em] uppercase mt-1 bg-amber-500/5 px-2.5 py-0.5 rounded-full border border-amber-500/10">Youth Dashboard</p>
                 </div>
-                
-                <div id="user-role-badge"></div>
-
                 <nav class="space-y-1.5">
-                    <button data-tab="announcements" onclick="switchTab('announcements')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
-                        Announcements
-                    </button>
-                    <button data-tab="schedule" onclick="switchTab('schedule')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
-                        Sunday Linup Configuration
-                    </button>
-                    <button data-tab="officers-list" onclick="switchTab('officers-list')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
-                        Church Representatives
-                    </button>
-                    <button data-tab="officers-meetings" onclick="switchTab('officers-meetings')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
-                        Strategic Council Meetings
-                    </button>
-                    <button data-tab="piso-day" onclick="switchTab('piso-day')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
-                        Micro-Collection Ledger
-                    </button>
-                    <button data-tab="polls" onclick="switchTab('polls')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
-                        Proposals & Elections
-                    </button>
-                    <button data-tab="funds" onclick="switchTab('funds')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
-                        Financial Transparent Index
-                    </button>
+                    <button data-tab="announcements" onclick="switchTab('announcements')" class="w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-xs font-bold tracking-wider uppercase transition-all text-slate-400 hover:text-white">📢 Announcements</button>
+                    <button data-tab="schedule" onclick="switchTab('schedule')" class="w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-xs font-bold tracking-wider uppercase transition-all text-slate-400 hover:text-white">📅 Weekly Line-Up</button>
+                    <button data-tab="officers-list" onclick="switchTab('officers-list')" class="w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-xs font-bold tracking-wider uppercase transition-all text-slate-400 hover:text-white">🖼️ Church Officers</button>
+                    <button data-tab="officers-meetings" onclick="switchTab('officers-meetings')" class="w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-xs font-bold tracking-wider uppercase transition-all text-slate-400 hover:text-white">👔 Meetings & Plans</button>
+                    <button data-tab="piso-day" onclick="switchTab('piso-day')" class="w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-xs font-bold tracking-wider uppercase transition-all text-slate-400 hover:text-white">🪙 Piso A Day</button>
+                    <button data-tab="polls" onclick="switchTab('polls')" class="w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-xs font-bold tracking-wider uppercase transition-all text-slate-400 hover:text-white">📊 Event Polls</button>
+                    <button data-tab="funds" onclick="switchTab('funds')" class="w-full text-left py-3 px-4 hover:bg-white/5 rounded-xl flex items-center gap-3 cursor-pointer text-xs font-bold tracking-wider uppercase transition-all text-slate-400 hover:text-white">💰 Church Funds</button>
                 </nav>
             </div>
-            
-            <button onclick="logout()" class="w-full border border-rose-500/20 hover:border-rose-500 bg-rose-500/5 hover:bg-rose-500 hover:text-white text-rose-400 p-3.5 rounded-xl font-bold text-xs uppercase tracking-widest cursor-pointer transition-all mt-6">
-                Disconnect Interaction
-            </button>
+            <div class="border-t border-white/5 pt-5 mt-4">
+                <span id="user-role-badge" class="block text-[10px] bg-white/5 border border-white/10 py-2.5 px-3 rounded-xl text-center mb-2.5 font-bold tracking-widest text-slate-400 uppercase shadow-inner">Guest Mode</span>
+                <button onclick="logout()" class="w-full bg-slate-900/60 hover:bg-red-950/40 text-slate-300 hover:text-red-400 py-3 px-4 rounded-xl text-xs font-bold transition-all border border-white/5 hover:border-red-500/20 cursor-pointer text-center uppercase tracking-wider">Logout System</button>
+            </div>
         </aside>
 
         <div id="sidebar-overlay" onclick="toggleMobileSidebar()" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"></div>
 
-        <main class="flex-1 p-4 md:p-8 lg:p-10 overflow-x-hidden relative">
+        <main class="flex-1 p-4 md:p-10 overflow-y-auto z-10 w-full max-w-full">
             
-            <section id="tab-announcements" class="tab-content hidden space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-section-glass p-6 rounded-2xl">
+            <section id="tab-announcements" class="tab-content bg-section-glass p-4 md:p-8 rounded-2xl w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/5 pb-5">
                     <div>
-                        <h2 class="text-2xl font-black text-white tracking-wide">Announcements Feed</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Relational notification streams mapping community interaction matrices.</p>
+                        <h2 class="text-xl md:text-2xl font-black text-white tracking-tight">📢 Church Announcements</h2>
+                        <p class="text-xs text-slate-400 mt-1">Important updates, news releases, and scheduling variables for the congregation.</p>
                     </div>
-                    <button onclick="openModal('announcement')" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-3 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider shadow-lg">+ Stream New Broadcast</button>
+                    <button class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-2.5 rounded-xl font-black transition-all cursor-pointer text-xs uppercase tracking-wider shrink-0" onclick="openModal('announcement')">+ New Announcement</button>
                 </div>
-                
-                <div class="bg-[#0f172a]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl">
-                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-pink-500/10 text-pink-400 rounded-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c0.521-1.291 0.454-2.822-0.454-3.928a4.906 4.906 0 00-3.111-1.397 4.907 4.907 0 00-4.086-2.115 4.906 4.906 0 00-4.086 2.115 4.906 4.906 0 00-3.112 1.397c-0.908 1.106-0.975 2.637-0.454 3.928a4.814 4.814 0 002.502 2.68 4.814 4.814 0 003.528 0c0.672-0.293 1.258-0.741 1.708-1.298 0.45 0.557 1.036 1.005 1.708 1.298a4.816 4.816 0 003.528 0 4.814 4.814 0 002.502-2.68zM12 12V3m0 0l-1.5 1.5M12 3l1.5 1.5" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-bold text-white">Celebrations Calendar</h3>
-                                <p class="text-xs text-slate-400">Upcoming birthdays for Officers and Members</p>
-                            </div>
-                        </div>
-                        <span class="text-xs font-semibold bg-pink-500/20 text-pink-300 px-2.5 py-1 rounded-full uppercase tracking-wider" id="current-month-badge">This Month</span>
-                    </div>
-                    <div id="birthday-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto pr-1">
-                        <p class="text-sm text-slate-400 col-span-2 py-4 text-center">Loading celebrations...</p>
-                    </div>
-                </div>
-
-                <div id="announcements-list" class="space-y-4"></div>
+                <div id="announcements-list" class="grid grid-cols-1 gap-4"></div>
             </section>
 
-            <section id="tab-schedule" class="tab-content hidden bg-section-glass p-6 md:p-8 rounded-2xl space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5">
+            <section id="tab-schedule" class="tab-content bg-section-glass p-4 md:p-8 rounded-2xl hidden w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/5 pb-5">
                     <div>
-                        <h2 class="text-2xl font-black text-white tracking-wide">Liturgical Timeline Grid</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Manage and organize musicians, vocal arrays, and multimedia operator positions.</p>
+                        <h2 class="text-xl md:text-2xl font-black text-white tracking-tight">📅 Praise Team Weekly Line-Up</h2>
+                        <p class="text-xs text-slate-400 mt-1">Weekly ministerial deployment metrics and layouts for the worship team platforms.</p>
                     </div>
-                    <div class="flex items-center gap-3 w-full sm:w-auto">
-                        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider whitespace-nowrap">Week Node:</span>
-                        <select id="sunday-filter" onchange="fetchData('schedule')" class="bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2.5 text-sm font-bold text-amber-400 focus:outline-none focus:border-amber-500 transition-colors w-full sm:w-48 cursor-pointer shadow-inner">
-                            <option value="Sunday W1">Sunday Week 1</option>
-                            <option value="Sunday W2">Sunday Week 2</option>
-                            <option value="Sunday W3">Sunday Week 3</option>
-                            <option value="Sunday W4">Sunday Week 4</option>
-                            <option value="Sunday W5">Sunday Week 5</option>
+                    <div class="shrink-0 w-full sm:w-auto">
+                        <select id="sunday-filter" onchange="fetchData('schedule')" class="w-full sm:w-auto p-3 px-5 border border-white/10 rounded-xl bg-[#0d1220] text-amber-400 text-xs font-bold focus:outline-none focus:border-amber-500/40 shadow-xl cursor-pointer">
+                            <option value="1st Sunday">1st Sunday</option>
+                            <option value="2nd Sunday">2nd Sunday</option>
+                            <option value="3rd Sunday">3rd Sunday</option>
+                            <option value="4th Sunday">4th Sunday</option>
+                            <option value="5th Sunday">5th Sunday</option>
                         </select>
                     </div>
                 </div>
-                <div id="schedule-container" class="space-y-4"></div>
+                <div id="schedule-container" class="w-full"></div>
             </section>
 
-            <section id="tab-officers-list" class="tab-content hidden space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-section-glass p-6 rounded-2xl">
+            <section id="tab-officers-list" class="tab-content bg-section-glass p-4 md:p-8 rounded-2xl hidden w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/5 pb-5">
                     <div>
-                        <h2 class="text-2xl font-black text-white tracking-wide">Church Representatives</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Leadership matrix profiles managing ministry cluster interaction scopes.</p>
+                        <h2 class="text-xl md:text-2xl font-black text-white tracking-tight">🖼️𝗡𝗘𝗖 𝗬𝗢𝗨𝗡𝗚 𝗣𝗘𝗢𝗣𝗟𝗘’𝗦 𝗢𝗙𝗙𝗜𝗖𝗘𝗥𝗦 𝟮𝟬𝟮𝟲–𝟮𝟬𝟮𝟴</h2>
+                        <p class="text-xs text-slate-400 mt-1">Elected structural officers, ministry directors, and technical operational staff.</p>
                     </div>
-                    <button onclick="openModal('officer')" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-3 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider shadow-lg">+ Deploy Executive Entity</button>
+                    <button class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-2.5 rounded-xl font-black transition-all cursor-pointer text-xs uppercase tracking-wider shrink-0" onclick="openModal('officer-rep')">+ Add Officer</button>
                 </div>
                 <div id="officers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"></div>
             </section>
 
-            <section id="tab-officers-meetings" class="tab-content hidden space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-section-glass p-6 rounded-2xl">
+            <section id="tab-officers-meetings" class="tab-content bg-section-glass p-4 md:p-8 rounded-2xl hidden w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/5 pb-5">
                     <div>
-                        <h2 class="text-2xl font-black text-white tracking-wide">Strategic Council Meetings</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Documented historical archives of tactical design blueprints and meeting vector traces.</p>
+                        <h2 class="text-xl md:text-2xl font-black text-white tracking-tight">👔 Meetings & Plans</h2>
+                        <p class="text-xs text-slate-400 mt-1">Strategic administrative decisions, milestone parameters, and timeline logs.</p>
                     </div>
-                    <button onclick="openModal('meeting')" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-3 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider shadow-lg">+ Log Strategic Directive</button>
+                    <button class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-2.5 rounded-xl font-black transition-all cursor-pointer text-xs uppercase tracking-wider shrink-0" onclick="openModal('meeting')">+ Add Plan / Meeting</button>
                 </div>
                 <div id="meetings-list" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
             </section>
 
-            <section id="tab-piso-day" class="tab-content hidden bg-section-glass p-6 md:p-8 rounded-2xl space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5">
+            <section id="tab-piso-day" class="tab-content bg-section-glass p-4 md:p-8 rounded-2xl hidden w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/5 pb-5">
                     <div>
-                        <h2 class="text-2xl font-black text-white tracking-wide">Micro-Collection Ledger</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Daily collection metric tracking pipelines validating continuous investment protocols.</p>
+                        <h2 class="text-xl md:text-2xl font-black text-white tracking-tight">💰 Piso a Day Tracker</h2>
+                        <p class="text-xs text-slate-400 mt-1">Algorithmic ledger rows detailing small continuous contributions from active youth nodes.</p>
                     </div>
-                    <button onclick="openModal('piso')" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-3 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider shadow-lg">+ Allocate Ledger Entry</button>
+                    <button class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-2.5 rounded-xl font-black transition-all cursor-pointer text-xs uppercase tracking-wider shrink-0" onclick="openModal('piso')">+ Add Record</button>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-white/5 bg-black/10 shadow-inner">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-white/5 bg-[#0f1322]/50 font-black text-[10px] uppercase tracking-widest text-slate-400">
-                                <th class="p-4 pl-6">Participant Identity</th>
-                                <th class="p-4">Quantized Ledger Weight</th>
-                                <th class="p-4">Timestamp Trace</th>
-                                <th class="admin-only p-4 text-center">Operation Control</th>
+                <div class="overflow-x-auto rounded-xl border border-white/5 shadow-2xl bg-black/20">
+                    <table class="w-full text-left border-collapse min-w-[600px]">
+                        <thead class="bg-[#090c14]/80 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-white/5">
+                            <tr>
+                                <th class="p-4 pl-6">Member Name</th>
+                                <th class="p-4">Amount Recieved</th>
+                                <th class="p-4">Date Documented</th>
+                                <th class="admin-only p-4 text-center">Data Mutation</th>
                             </tr>
                         </thead>
                         <tbody id="piso-table-body" class="divide-y divide-white/5"></tbody>
@@ -429,34 +392,34 @@
                 </div>
             </section>
 
-            <section id="tab-polls" class="tab-content hidden space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-section-glass p-6 rounded-2xl">
+            <section id="tab-polls" class="tab-content bg-section-glass p-4 md:p-8 rounded-2xl hidden w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/5 pb-5">
                     <div>
-                        <h2 class="text-2xl font-black text-white tracking-wide">Proposals & Elections</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Democratic pipeline mechanisms confirming deployment targets via consensus matching.</p>
+                        <h2 class="text-xl md:text-2xl font-black text-white tracking-tight">📊 Event Suggestions & Voting</h2>
+                        <p class="text-xs text-slate-400 mt-1">Democratic operational proposals and dynamic concept metrics tracker.</p>
                     </div>
-                    <button onclick="openModal('poll')" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-3 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider shadow-lg">+ Propose Concept Ballot</button>
+                    <button class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-2.5 rounded-xl font-black transition-all cursor-pointer text-xs uppercase tracking-wider shrink-0" onclick="openModal('poll')">+ Suggest New Event</button>
                 </div>
-                <div id="polls-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+                <div id="polls-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
             </section>
 
-            <section id="tab-funds" class="tab-content hidden bg-section-glass p-6 md:p-8 rounded-2xl space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5">
+            <section id="tab-funds" class="tab-content bg-section-glass p-4 md:p-8 rounded-2xl hidden w-full">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-white/5 pb-5">
                     <div>
-                        <h2 class="text-2xl font-black text-white tracking-wide">Financial Transparent Index</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Audit-ready tracking vectors reporting real-time fund allocations transparently.</p>
+                        <h2 class="text-xl md:text-2xl font-black text-white tracking-tight">💰 Financial Ledger Report</h2>
+                        <p class="text-xs text-slate-400 mt-1">Audit-ready dynamic accounting sheets showing Offerings, Tithes, and Ministry Expenditures.</p>
                     </div>
-                    <button onclick="openModal('fund')" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-3 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider shadow-lg">+ Insert Transaction Line</button>
+                    <button class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-2.5 rounded-xl font-black transition-all cursor-pointer text-xs uppercase tracking-wider shrink-0" onclick="openModal('fund')">+ Record Transaction</button>
                 </div>
-                <div class="overflow-x-auto rounded-xl border border-white/5 bg-black/10 shadow-inner">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-white/5 bg-[#0f1322]/50 font-black text-[10px] uppercase tracking-widest text-slate-400">
-                                <th class="p-4 pl-6">Dimension Classification</th>
-                                <th class="p-4">Quantized Mass</th>
-                                <th class="p-4">Timestamp Node</th>
-                                <th class="p-4">Transactional Log Details</th>
-                                <th class="admin-only p-4 text-center">Operation Control</th>
+                <div class="overflow-x-auto rounded-xl border border-white/5 shadow-2xl bg-black/20">
+                    <table class="w-full text-left border-collapse min-w-[700px]">
+                        <thead class="bg-[#090c14]/80 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-white/5">
+                            <tr>
+                                <th class="p-4 pl-6">Transaction Type</th>
+                                <th class="p-4">Amount Exchanged</th>
+                                <th class="p-4">Date</th>
+                                <th class="p-4">Remarks / Details</th>
+                                <th class="admin-only p-4 text-center">Data Mutation</th>
                             </tr>
                         </thead>
                         <tbody id="funds-table-body" class="divide-y divide-white/5"></tbody>
@@ -475,11 +438,11 @@
             <div id="modal-fields" class="space-y-4"></div>
             <div class="flex justify-end gap-3 mt-6 border-t border-white/5 pt-4">
                 <button onclick="closeModal()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer transition-colors">Cancel Interaction</button>
-                <button id="modal-save-btn" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-[#090d16] px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider cursor-pointer transition-colors shadow-lg shadow-amber-500/10">Commit Mutations</button>
+                <button id="modal-save-btn" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-[#090d16] px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider cursor-pointer shadow-lg shadow-amber-500/10 transition-colors">Commit Entry</button>
             </div>
         </div>
     </div>
 
-    <script src="app (1).js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
