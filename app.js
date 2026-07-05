@@ -102,17 +102,8 @@ function applyPermissions() {
 // SYSTEM ACCESS SECURITY AUTH
 // ==========================================
 async function login() {
-    // RESTORED: Fixed IDs to look for 'email' and 'password' matching index.html
-    const emailField = document.getElementById('email');
-    const passwordField = document.getElementById('password');
-    
-    if (!emailField || !passwordField) {
-        alert("Authentication DOM elements missing.");
-        return;
-    }
-
-    const email = emailField.value;
-    const password = passwordField.value;
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
     
     if (!email || !password) {
         alert("Please completely supply authentication strings.");
@@ -133,9 +124,8 @@ function logout() {
     document.getElementById('app-container').classList.add('hidden');
     document.getElementById('auth-container').classList.remove('hidden');
     
-    // RESTORED: Clears the correct input IDs upon logout
-    if (document.getElementById('email')) document.getElementById('email').value = '';
-    if (document.getElementById('password')) document.getElementById('password').value = '';
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
 }
 
 // ==========================================
