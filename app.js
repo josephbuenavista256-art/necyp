@@ -112,7 +112,7 @@ async function login() {
 
     let response;
     
-    // Fallback architecture to automatically handle both Supabase v1 and v2 methods
+    // Fallback architecture to automatically handle both Supabase v1 and v2 methods safely
     if (typeof supabaseClient.auth.signInWithPassword === 'function') {
         response = await supabaseClient.auth.signInWithPassword({ email, password });
     } else if (typeof supabaseClient.auth.signIn === 'function') {
