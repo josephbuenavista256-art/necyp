@@ -19,7 +19,7 @@ function handleDbResponse(error, successMessage, callback) {
 }
 
 // ==========================================
-// CORE NAVIGATION & PERMISSIONS (WITH PREMIUM SMOOTH EASING)
+// CORE NAVIGATION & PERMISSIONS (WITH MOBILE NAVIGATION HIGHLIGHTING)
 // ==========================================
 function switchTab(tabName) {
     const allTabs = document.querySelectorAll('.tab-content');
@@ -38,14 +38,25 @@ function switchTab(tabName) {
         targetTab.classList.add('tab-active');
     }
     
-    // Update active state navigation highlighting with luxury sliding styles
-    document.querySelectorAll('[data-tab]').forEach(btn => {
+    // Update active state navigation highlighting on Desktop Sidebar
+    document.querySelectorAll('#desktop-nav [data-tab]').forEach(btn => {
         if (btn.getAttribute('data-tab') === tabName) {
             btn.classList.add('bg-amber-500/10', 'text-amber-400', 'border-l-4', 'border-amber-500', 'pl-6');
             btn.classList.remove('text-slate-400', 'hover:bg-white/5');
         } else {
             btn.classList.remove('bg-amber-500/10', 'text-amber-400', 'border-l-4', 'border-amber-500', 'pl-6');
             btn.classList.add('text-slate-400', 'hover:bg-white/5');
+        }
+    });
+
+    // Update active state navigation highlighting on Mobile Bottom Navbar
+    document.querySelectorAll('#mobile-nav [data-tab]').forEach(btn => {
+        if (btn.getAttribute('data-tab') === tabName) {
+            btn.classList.add('text-amber-400', 'scale-105');
+            btn.classList.remove('text-slate-400');
+        } else {
+            btn.classList.remove('text-amber-400', 'scale-105');
+            btn.classList.add('text-slate-400');
         }
     });
 
@@ -236,7 +247,7 @@ async function fetchData(tab) {
             </tr>`).join('') || '<tr><td colspan="4" class="p-8 text-center text-slate-400 italic text-sm font-medium">No ledger lines allocated inside the module.</td></tr>';
     }
 
-    // 6. PROPOSALS & ELECTIONS
+    // 6. PROPOSALS & ELECTIONS (VOTING UNLOCKED FOR ALL VIEWERS)
     if (tab === 'polls') {
         let { data, error } = await supabaseClient.from('event_polls').select('*').order('created_at', { ascending: false });
         let container = document.getElementById('polls-list');
@@ -249,7 +260,7 @@ async function fetchData(tab) {
                     <p class="text-slate-400 text-xs mt-2 leading-relaxed font-medium line-clamp-3">${item.description || 'No concept description supplied.'}</p>
                 </div>
                 <div>
-                    <div class="my-4 bg-black/30 border border-white/5 p-4 rounded-xl shadow-inner group-hover:border-amber-500/10">
+                    <div class="my-4 bg-black/30 border border-white/5 p-4 rounded-xl shadow-inner">
                         <span class="block text-4xl font-black text-amber-400 tracking-tighter">${item.votes}</span>
                         <span class="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1 block">Verified Assenting Votes</span>
                     </div>
@@ -312,8 +323,9 @@ async function deleteData(table, id) {
 }
 
 async function voteEvent(id, currentVotes) {
+    // Unlocked completely from admin gates to allow standard viewers to submit responses smoothly
     const { error } = await supabaseClient.from('event_polls').update({ votes: currentVotes + 1 }).eq('id', id);
-    handleDbResponse(error, null, () => {
+    handleDbResponse(error, "Your vote has been counted successfully!", () => {
         fetchData('polls');
     });
 }
