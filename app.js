@@ -67,19 +67,13 @@ function switchTab(tabName) {
         toggleMobileSidebar();
     }
 
-    if (tabName === 'dashboard' || tabName === 'announcements') {
-        renderBirthdayCalendar();
-    }
-
     fetchData(tabName);
 }
 
 function toggleViewMode(asGuest) {
-    isAdmin = !asGuest;
-    
-    // Reveal the main layout container first
     document.getElementById('auth-container').classList.add('hidden');
     document.getElementById('app-container').classList.remove('hidden');
+    isAdmin = !asGuest;
     
     const roleBadge = document.getElementById('user-role-badge');
     if (isAdmin) {
@@ -116,7 +110,19 @@ async function login() {
         return;
     }
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    let response;
+    
+    // Fallback architecture to automatically handle both Supabase v1 and v2 methods
+    if (typeof supabaseClient.auth.signInWithPassword === 'function') {
+        response = await supabaseClient.auth.signInWithPassword({ email, password });
+    } else if (typeof supabaseClient.auth.signIn === 'function') {
+        response = await supabaseClient.auth.signIn({ email, password });
+    } else {
+        alert("❌ Authentication configuration mismatch. Please verify your Supabase library injection.");
+        return;
+    }
+
+    const { data, error } = response;
     if (error) {
         alert("Invalid login strings: " + error.message);
     } else {
@@ -201,7 +207,7 @@ async function fetchData(tab) {
         `;
     }
 
-    // 3. CHURCH REPRESENTATIVES (With Gradient Halo Ring Design Wrapper)
+    // 3. CHURCH REPRESENTATIVES
     if (tab === 'officers-list') {
         let { data, error } = await supabaseClient.from('church_officers').select('*').order('created_at', { ascending: true });
         let container = document.getElementById('officers-grid');
@@ -209,13 +215,12 @@ async function fetchData(tab) {
         if (error) console.error(error);
         container.innerHTML = data?.map(item => `
             <div class="premium-card flex flex-col items-center text-center group transition-all duration-300">
-                <div class="relative w-24 h-24 rounded-full p-0.5 bg-gradient-to-tr from-amber-600 via-amber-400/20 to-amber-300 border border-white/10 shadow-lg overflow-hidden flex items-center justify-center mb-3.5 group-hover:scale-105 transition-transform duration-500">
-                    <div class="absolute inset-0 bg-[#060813] rounded-full scale-[0.97] z-0"></div>
-                    <img src="${item.image_url || 'https://via.placeholder.com/200?text=No+Photo'}" class="w-full h-full object-cover rounded-full z-10 relative" alt="Officer">
+                <div class="w-24 h-24 overflow-hidden border-2 border-amber-500/40 rounded-full mb-3.5 shadow-md bg-slate-900 shrink-0 relative">
+                    <img src="${item.image_url || 'https://via.placeholder.com/200?text=No+Photo'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Officer">
                 </div>
-                <h3 class="font-extrabold text-base tracking-wide line-clamp-1 text-white">${item.name}</h3>
-                <p class="font-black text-[10px] tracking-widest uppercase mt-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-0.5 rounded-full">${item.position}</p>
-                <div class="admin-only mt-4 flex gap-2 justify-center w-full border-t border-white/5 pt-3">
+                <h3 class="font-extrabold text-base tracking-wide line-clamp-1">${item.name}</h3>
+                <p class="font-black text-[10px] tracking-widest uppercase mt-1 bg-amber-500/5 px-3 py-0.5 rounded-full">${item.position}</p>
+                <div class="admin-only mt-4 flex gap-2 justify-center w-full border-t border-slate-200/60 pt-3">
                     <button onclick="openEditOfficerModal(${item.id}, '${item.name}', '${item.position}', '${item.image_url || ''}')" class="btn-edit text-[10px] px-2.5 py-1.5">Edit</button>
                     <button onclick="deleteData('church_officers', ${item.id})" class="btn-delete text-[10px] px-2.5 py-1.5">Remove</button>
                 </div>
@@ -308,6 +313,7 @@ async function fetchData(tab) {
                 </td>
             </tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-400 italic text-sm font-medium">No transparent ledger balance sheets detected.</td></tr>';
     }
+    
     applyPermissions();
 }
 
@@ -321,238 +327,330 @@ async function deleteData(table, id) {
     }
     if (confirm("Confirm database row drop sequence? This action cannot be reversed.")) {
         const { error } = await supabaseClient.from(table).delete().eq('id', id);
-        let targetTab = table === 'piso_a_day' ? 'piso-day' : (table === 'officer_plans' ? 'officers-meetings' : (table === 'church_officers' ? 'officers-list' : (table === 'monthly_schedules' ? 'schedule' : (table === 'event_polls' ? 'polls' : (table === 'church_funds' ? 'funds' : table)))));
-        handleDbResponse(error, "Relational data segment dropped completely.", () => fetchData(targetTab));
+        
+        let targetTab = table === 'piso_a_day' ? 'piso-day' : 
+                        (table === 'officer_plans' ? 'officers-meetings' : 
+                        (table === 'church_officers' ? 'officers-list' : 
+                        (table === 'monthly_schedules' ? 'schedule' : 
+                        (table === 'event_polls' ? 'polls' : 
+                        (table === 'church_funds' ? 'funds' : table)))));
+
+        handleDbResponse(error, "Record removed from server nodes.", () => {
+            fetchData(targetTab);
+        });
     }
 }
 
 async function voteEvent(id, currentVotes) {
     const { error } = await supabaseClient.from('event_polls').update({ votes: currentVotes + 1 }).eq('id', id);
-    handleDbResponse(error, "Assenting vote successfully verified.", () => fetchData('polls'));
+    handleDbResponse(error, null, () => {
+        fetchData('polls');
+    });
 }
 
-async function setupCustomSunday(weekLabel) {
-    const { error } = await supabaseClient.from('monthly_schedules').insert([{
-        sunday_week: weekLabel,
-        verse: "For where two or three gather in my name, there am I with them.",
-        worship_leader: "", backup_singers: "", guitar: "", bass: "", drummer: "", keyboard: "", multimedia: ""
+async function setupCustomSunday(weekName) {
+    if (!isAdmin) {
+        alert("Access Denied: Administrative clearance required.");
+        return;
+    }
+    const { error } = await supabaseClient.from('monthly_schedules').insert([{ 
+        sunday_week: weekName, 
+        verse: "Psalm 100:2 - Worship the Lord with gladness; come before him with joyful songs.", 
+        worship_leader: "", backup_singers: "", guitar: "", bass: "", drummer: "", keyboard: "", multimedia: "" 
     }]);
-    handleDbResponse(error, "Liturgical template layout initialized inside repository stream.", () => fetchData('schedule'));
+
+    handleDbResponse(error, "Weekly layout initialized cleanly.", () => {
+        fetchData('schedule');
+    });
 }
 
 // ==========================================
-// MODAL ARCHITECTURE CONTROLLER PIPELINE
+// FORM OVERLAY SYSTEM CONTROLLERS (MODALS)
 // ==========================================
-function openModal(type) {
-    const modal = document.getElementById('generic-modal');
-    const title = document.getElementById('modal-title');
-    const fields = document.getElementById('modal-fields');
-    const saveBtn = document.getElementById('modal-save-btn');
-    
-    modal.classList.remove('hidden');
-    fields.innerHTML = '';
-    
-    if (type === 'announcement') {
-        title.innerText = "Deploy Broadside Broadcast";
-        fields.innerHTML = `
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Broadcast Title</label><input type="text" id="f-ann-title" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Broadcast Text Layer</label><textarea id="f-ann-content" rows="4" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></textarea></div>
-        `;
-        saveBtn.onclick = async () => {
-            const { error } = await supabaseClient.from('announcements').insert([{ title: document.getElementById('f-ann-title').value, content: document.getElementById('f-ann-content').value }]);
-            handleDbResponse(error, "New informational event vector deployed.", () => { closeModal(); fetchData('announcements'); });
-        };
-    }
-    
-    if (type === 'officer') {
-        title.innerText = "Deploy New Executive Officer Entity";
-        fields.innerHTML = `
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Officer Name String</label><input type="text" id="f-off-name" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Assigned Position Token</label><input type="text" id="f-off-pos" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Image Address Vector (URL)</label><input type="text" id="f-off-img" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        `;
-        saveBtn.onclick = async () => {
-            const { error } = await supabaseClient.from('church_officers').insert([{ name: document.getElementById('f-off-name').value, position: document.getElementById('f-off-pos').value, image_url: document.getElementById('f-off-img').value }]);
-            handleDbResponse(error, "Executive leadership profile appended into active tree.", () => { closeModal(); fetchData('officers-list'); });
-        };
-    }
-
-    if (type === 'meeting') {
-        title.innerText = "Log New Strategic Initiative Directive";
-        fields.innerHTML = `
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Directive Topic Heading</label><input type="text" id="f-meet-title" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Calendar Date Node</label><input type="date" id="f-meet-date" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Strategic Logic Manifest</label><textarea id="f-meet-desc" rows="4" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></textarea></div>
-        `;
-        saveBtn.onclick = async () => {
-            const { error } = await supabaseClient.from('officer_plans').insert([{ title: document.getElementById('f-meet-title').value, meeting_date: document.getElementById('f-meet-date').value, description: document.getElementById('f-meet-desc').value }]);
-            handleDbResponse(error, "Strategic blueprint locked inside historical database.", () => { closeModal(); fetchData('officers-meetings'); });
-        };
-    }
-
-    if (type === 'piso') {
-        title.innerText = "Allocate Micro-Collection Ledger Entry";
-        fields.innerHTML = `
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Participant Full Name</label><input type="text" id="f-piso-name" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Quantized Currency Value (PHP)</label><input type="number" id="f-piso-amt" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Timestamp Matrix Log Date</label><input type="date" id="f-piso-date" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        `;
-        saveBtn.onclick = async () => {
-            const { error } = await supabaseClient.from('piso_a_day').insert([{ member_name: document.getElementById('f-piso-name').value, amount: parseFloat(document.getElementById('f-piso-amt').value || 0), date_recorded: document.getElementById('f-piso-date').value }]);
-            handleDbResponse(error, "Micro-collection transactional logic point indexed.", () => { closeModal(); fetchData('piso-day'); });
-        };
-    }
-
-    if (type === 'poll') {
-        title.innerText = "Propose New Concept Ballot Node";
-        fields.innerHTML = `
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Target Proposition Heading</label><input type="text" id="f-poll-name" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Detailed Structural Scope</label><textarea id="f-poll-desc" rows="4" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></textarea></div>
-        `;
-        saveBtn.onclick = async () => {
-            const { error } = await supabaseClient.from('event_polls').insert([{ event_name: document.getElementById('f-poll-name').value, description: document.getElementById('f-poll-desc').value, votes: 0 }]);
-            handleDbResponse(error, "Conceptual democratic proposition uploaded.", () => { closeModal(); fetchData('polls'); });
-        };
-    }
-
-    if (type === 'fund') {
-        title.innerText = "Commit Transaction Line Entry";
-        fields.innerHTML = `
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Classification Tag</label><select id="f-fund-type" class="w-full bg-slate-900 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"><option value="Income">Income Pipeline Vector</option><option value="Expense">Expense Allocation Matrix</option></select></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Quantized Ledger Mass (PHP)</label><input type="number" id="f-fund-amt" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Audit Sequence Log Date</label><input type="date" id="f-fund-date" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Transactional Description Core</label><input type="text" id="f-fund-rem" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        `;
-        saveBtn.onclick = async () => {
-            const { error } = await supabaseClient.from('church_funds').insert([{ type: document.getElementById('f-fund-type').value, amount: parseFloat(document.getElementById('f-fund-amt').value || 0), date_recorded: document.getElementById('f-fund-date').value, remarks: document.getElementById('f-fund-rem').value }]);
-            handleDbResponse(error, "Transparent accounting audit trace fully validated.", () => { closeModal(); fetchData('funds'); });
-        };
-    }
-}
-
 function closeModal() {
     document.getElementById('generic-modal').classList.add('hidden');
+    document.getElementById('modal-fields').innerHTML = '';
+}
+
+function openModal(mode) {
+    if (!isAdmin) {
+        alert("Access Denied: Missing operational credentials.");
+        return;
+    }
+    const modal = document.getElementById('generic-modal');
+    const fields = document.getElementById('modal-fields');
+    modal.classList.remove('hidden');
+
+    const inputClass = "w-full p-3.5 border border-white/10 rounded-xl focus:outline-none focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/10 bg-black/20 text-white placeholder-slate-500 text-sm transition-all duration-300";
+
+    if (mode === 'announcement') {
+        document.getElementById('modal-title').innerText = "Create New Announcement";
+        fields.innerHTML = `
+            <input type="text" id="f-title" placeholder="Announcement Title" class="${inputClass}">
+            <textarea id="f-content" placeholder="Details and instructions..." rows="4" class="${inputClass}"></textarea>`;
+        
+        document.getElementById('modal-save-btn').onclick = async () => {
+            const { error } = await supabaseClient.from('announcements').insert([{ 
+                title: document.getElementById('f-title').value, 
+                content: document.getElementById('f-content').value 
+            }]);
+            handleDbResponse(error, "Announcement distributed to network.", () => {
+                closeModal(); 
+                fetchData('announcements');
+            });
+        };
+    }
+    
+    if (mode === 'officer-rep') {
+        document.getElementById('modal-title').innerText = "Add Church Officer / Leader";
+        fields.innerHTML = `
+            <input type="text" id="f-off-name" placeholder="Full Name" class="${inputClass}">
+            <input type="text" id="f-off-pos" placeholder="Position (e.g., Pastor, Deacon, Elder)" class="${inputClass}">
+            <input type="text" id="f-off-img" placeholder="2x2 Image URL (Optional)" class="${inputClass}">`;
+        
+        document.getElementById('modal-save-btn').onclick = async () => {
+            const { error } = await supabaseClient.from('church_officers').insert([{ 
+                name: document.getElementById('f-off-name').value, 
+                position: document.getElementById('f-off-pos').value, 
+                image_url: document.getElementById('f-off-img').value 
+            }]);
+            handleDbResponse(error, "Representative profile established.", () => {
+                closeModal(); 
+                fetchData('officers-list');
+            });
+        };
+    }
+
+    if (mode === 'meeting') {
+        document.getElementById('modal-title').innerText = "Add Meeting / Plan Record";
+        fields.innerHTML = `
+            <input type="text" id="f-meet-title" placeholder="Agenda Title" class="${inputClass}">
+            <input type="date" id="f-meet-date" class="${inputClass}">
+            <textarea id="f-meet-desc" placeholder="Agenda and timeline notes..." rows="3" class="${inputClass}"></textarea>`;
+        
+        document.getElementById('modal-save-btn').onclick = async () => {
+            const { error } = await supabaseClient.from('officer_plans').insert([{ 
+                title: document.getElementById('f-meet-title').value, 
+                meeting_date: document.getElementById('f-meet-date').value, 
+                description: document.getElementById('f-meet-desc').value 
+            }]);
+            handleDbResponse(error, "Council logging synchronized.", () => {
+                closeModal(); 
+                fetchData('officers-meetings');
+            });
+        };
+    }
+
+    if (mode === 'piso') {
+        document.getElementById('modal-title').innerText = "Record Piso A Day Collection";
+        fields.innerHTML = `
+            <input type="text" id="f-piso-name" placeholder="Congregation Member Name" class="${inputClass}">
+            <input type="number" id="f-piso-amt" placeholder="Amount (₱)" class="${inputClass}">
+            <input type="date" id="f-piso-date" class="${inputClass}">`;
+        
+        document.getElementById('modal-save-btn').onclick = async () => {
+            const { error } = await supabaseClient.from('piso_a_day').insert([{ 
+                member_name: document.getElementById('f-piso-name').value, 
+                amount: parseFloat(document.getElementById('f-piso-amt').value || 0), 
+                date_recorded: document.getElementById('f-piso-date').value 
+            }]);
+            handleDbResponse(error, "Contribution tracked inside ledger nodes.", () => {
+                closeModal(); 
+                fetchData('piso-day');
+            });
+        };
+    }
+
+    if (mode === 'poll') {
+        document.getElementById('modal-title').innerText = "Propose New Event Suggestion";
+        fields.innerHTML = `
+            <input type="text" id="f-poll-name" placeholder="Proposed Activity / Event Name" class="${inputClass}">
+            <textarea id="f-poll-desc" placeholder="Brief rationale or explanation..." rows="3" class="${inputClass}"></textarea>`;
+        
+        document.getElementById('modal-save-btn').onclick = async () => {
+            const { error } = await supabaseClient.from('event_polls').insert([{ 
+                event_name: document.getElementById('f-poll-name').value, 
+                description: document.getElementById('f-poll-desc').value,
+                votes: 0
+            }]);
+            handleDbResponse(error, "Proposition deployed to public stream.", () => {
+                closeModal(); 
+                fetchData('polls');
+            });
+        };
+    }
+
+    if (mode === 'fund') {
+        document.getElementById('modal-title').innerText = "Log Financial Ledger Transaction";
+        fields.innerHTML = `
+            <select id="f-fund-type" class="${inputClass}">
+                <option value="Tithes">Tithes</option>
+                <option value="Offering">Regular Offering</option>
+                <option value="Donation">Special Donation</option>
+                <option value="Expense">Expense/Outflow</option>
+            </select>
+            <input type="number" id="f-fund-amt" placeholder="Transaction Amount (₱)" class="${inputClass}">
+            <input type="date" id="f-fund-date" class="${inputClass}">
+            <input type="text" id="f-fund-rem" placeholder="Remarks, reference, or specifications" class="${inputClass}">`;
+        
+        document.getElementById('modal-save-btn').onclick = async () => {
+            const { error } = await supabaseClient.from('church_funds').insert([{ 
+                type: document.getElementById('f-fund-type').value, 
+                amount: parseFloat(document.getElementById('f-fund-amt').value || 0), 
+                date_recorded: document.getElementById('f-fund-date').value,
+                remarks: document.getElementById('f-fund-rem').value
+            }]);
+            handleDbResponse(error, "Financial matrix balance synchronized.", () => {
+                closeModal(); 
+                fetchData('funds');
+            });
+        };
+    }
 }
 
 // ==========================================
-// EDIT MODAL ARCHITECTURE CONTROLLER INTERCEPTS
+// DYNAMIC COMPONENT UPDATE SYSTEMS (EDITORS)
 // ==========================================
 function openEditModal(mode, id, oldTitle, oldContent) {
-    openModal('announcement');
-    document.getElementById('modal-title').innerText = "Mutate Broadcast Vector Trace";
-    document.getElementById('f-ann-title').value = oldTitle;
-    document.getElementById('f-ann-content').value = oldContent;
-    
+    openModal(mode);
+    document.getElementById('modal-title').innerText = "Update Announcement Parameters";
+    document.getElementById('f-title').value = oldTitle;
+    document.getElementById('f-content').value = oldContent;
     document.getElementById('modal-save-btn').onclick = async () => {
-        const { error } = await supabaseClient.from('announcements').update({ title: document.getElementById('f-ann-title').value, content: document.getElementById('f-ann-content').value }).eq('id', id);
-        handleDbResponse(error, "Broadcast stream mutation processed cleanly.", () => { closeModal(); fetchData('announcements'); });
-    };
-}
-
-function openEditScheduleModal(id, sundayWeek, verse, wl, bsing, gtr, bs, dr, kb, multi) {
-    const modal = document.getElementById('generic-modal');
-    const title = document.getElementById('modal-title');
-    const fields = document.getElementById('modal-fields');
-    const saveBtn = document.getElementById('modal-save-btn');
-    
-    modal.classList.remove('hidden');
-    title.innerText = `Mutate ${sundayWeek} Matrix Mapping`;
-    fields.innerHTML = `
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Scripture Context</label><input type="text" id="f-sc-verse" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Worship Leader Anchor</label><input type="text" id="f-sc-wl" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Vocal Array Nodes</label><input type="text" id="f-sc-bs" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Lead Guitar Node</label><input type="text" id="f-sc-gtr" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Bassist Array Element</label><input type="text" id="f-sc-bass" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Rhythm / Drums Link</label><input type="text" id="f-sc-dr" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Synthesizer Operator</label><input type="text" id="f-sc-kb" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Projection Node Target</label><input type="text" id="f-sc-multi" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-    `;
-    
-    document.getElementById('f-sc-verse').value = verse;
-    document.getElementById('f-sc-wl').value = wl;
-    document.getElementById('f-sc-bs').value = bsing;
-    document.getElementById('f-sc-gtr').value = gtr;
-    document.getElementById('f-sc-bass').value = bs;
-    document.getElementById('f-sc-dr').value = dr;
-    document.getElementById('f-sc-kb').value = kb;
-    document.getElementById('f-sc-multi').value = multi;
-
-    saveBtn.onclick = async () => {
-        const { error } = await supabaseClient.from('monthly_schedules').update({
-            verse: document.getElementById('f-sc-verse').value,
-            worship_leader: document.getElementById('f-sc-wl').value,
-            backup_singers: document.getElementById('f-sc-bs').value,
-            guitar: document.getElementById('f-sc-gtr').value,
-            bass: document.getElementById('f-sc-bass').value,
-            drummer: document.getElementById('f-sc-dr').value,
-            keyboard: document.getElementById('f-sc-kb').value,
-            multimedia: document.getElementById('f-sc-multi').value
+        const { error } = await supabaseClient.from('announcements').update({ 
+            title: document.getElementById('f-title').value, 
+            content: document.getElementById('f-content').value 
         }).eq('id', id);
-        textLoad = "Liturgical line-up structure mutated globally.";
-        handleDbResponse(error, textLoad, () => { closeModal(); fetchData('schedule'); });
+        handleDbResponse(error, "Announcement updated cleanly.", () => {
+            closeModal(); 
+            fetchData('announcements');
+        });
     };
 }
 
-// REST OF THE CONTROLLER ARCHITECTURE
-function openEditOfficerModal(id, name, pos, img) {
-    openModal('officer');
-    document.getElementById('modal-title').innerText = "Mutate Leadership Entity Signature";
-    document.getElementById('f-off-name').value = name;
-    document.getElementById('f-off-pos').value = pos;
-    document.getElementById('f-off-img').value = img;
+function openEditScheduleModal(id, currentSunday, verse, wl, backup, guitar, bass, drummer, keyboard, multimedia) {
+    if (!isAdmin) return alert("Clearance required.");
+    const modal = document.getElementById('generic-modal');
+    const fields = document.getElementById('modal-fields');
+    modal.classList.remove('hidden');
+    document.getElementById('modal-title').innerText = `Update ${currentSunday} Layout`;
+
+    const inputClass = "w-full p-2.5 border border-white/10 rounded-lg bg-black/20 text-white placeholder-stone-500 text-xs focus:outline-none focus:border-amber-500/40";
     
+    fields.innerHTML = `
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Weekly Verse Highlight</label><input type="text" id="e-verse" class="${inputClass}" value="${verse}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Worship Leader</label><input type="text" id="e-wl" class="${inputClass}" value="${wl}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Backup Singers</label><input type="text" id="e-backup" class="${inputClass}" value="${backup}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Guitarist</label><input type="text" id="e-guitar" class="${inputClass}" value="${guitar}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Bass Player</label><input type="text" id="e-bass" class="${inputClass}" value="${bass}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Drummer</label><input type="text" id="e-drum" class="${inputClass}" value="${drummer}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Keyboardist</label><input type="text" id="e-key" class="${inputClass}" value="${keyboard}"></div>
+        <div><label class="text-[10px] text-slate-400 font-bold block mb-1">Multimedia Operator</label><input type="text" id="e-multi" class="${inputClass}" value="${multimedia}"></div>
+    `;
+
     document.getElementById('modal-save-btn').onclick = async () => {
-        const { error } = await supabaseClient.from('church_officers').update({ name: document.getElementById('f-off-name').value, position: document.getElementById('f-off-pos').value, image_url: document.getElementById('f-off-img').value }).eq('id', id);
-        handleDbResponse(error, "Leadership profile changes structural lock verified.", () => { closeModal(); fetchData('officers-list'); });
+        const { error } = await supabaseClient.from('monthly_schedules').update({
+            verse: document.getElementById('e-verse').value,
+            worship_leader: document.getElementById('e-wl').value,
+            backup_singers: document.getElementById('e-backup').value,
+            guitar: document.getElementById('e-guitar').value,
+            bass: document.getElementById('e-bass').value,
+            drummer: document.getElementById('e-drum').value,
+            keyboard: document.getElementById('e-key').value,
+            multimedia: document.getElementById('e-multi').value
+        }).eq('id', id);
+
+        handleDbResponse(error, "Ministerial group layout altered directly.", () => {
+            closeModal();
+            fetchData('schedule');
+        });
     };
 }
 
-function openEditMeetingModal(id, titleText, dateText, descText) {
+function openEditOfficerModal(id, oldName, oldPos, oldImg) {
+    openModal('officer-rep');
+    document.getElementById('modal-title').innerText = "Edit Church Officer Settings";
+    document.getElementById('f-off-name').value = oldName;
+    document.getElementById('f-off-pos').value = oldPos;
+    document.getElementById('f-off-img').value = oldImg;
+    document.getElementById('modal-save-btn').onclick = async () => {
+        const { error } = await supabaseClient.from('church_officers').update({ 
+            name: document.getElementById('f-off-name').value, 
+            position: document.getElementById('f-off-pos').value, 
+            image_url: document.getElementById('f-off-img').value 
+        }).eq('id', id);
+        handleDbResponse(error, "Profile modifications recorded.", () => {
+            closeModal(); 
+            fetchData('officers-list');
+        });
+    };
+}
+
+// ==========================================
+// REST OF EDIT MODAL OPERATIONS EXTENSIONS
+// ==========================================
+function openEditMeetingModal(id, oldTitle, oldDate, oldDesc) {
     openModal('meeting');
-    document.getElementById('modal-title').innerText = "Modify Council Directive Framework";
-    document.getElementById('f-meet-title').value = titleText;
-    document.getElementById('f-meet-date').value = dateText;
-    document.getElementById('f-meet-desc').value = descText;
-    
+    document.getElementById('modal-title').innerText = "Edit Meeting Agenda";
+    document.getElementById('f-meet-title').value = oldTitle;
+    document.getElementById('f-meet-date').value = oldDate;
+    document.getElementById('f-meet-desc').value = oldDesc;
     document.getElementById('modal-save-btn').onclick = async () => {
-        const { error } = await supabaseClient.from('officer_plans').update({ title: document.getElementById('f-meet-title').value, meeting_date: document.getElementById('f-meet-date').value, description: document.getElementById('f-meet-desc').value }).eq('id', id);
-        handleDbResponse(error, "Council initiative roadmap updated inside system parameters.", () => { closeModal(); fetchData('officers-meetings'); });
+        const { error } = await supabaseClient.from('officer_plans').update({ 
+            title: document.getElementById('f-meet-title').value, 
+            meeting_date: document.getElementById('f-meet-date').value, 
+            description: document.getElementById('f-meet-desc').value 
+        }).eq('id', id);
+        handleDbResponse(error, "Meeting logging variables modified.", () => {
+            closeModal(); 
+            fetchData('officers-meetings');
+        });
     };
 }
 
-function openEditPisoModal(id, name, amt, date) {
+function openEditPisoModal(id, oldName, oldAmt, oldDate) {
     openModal('piso');
-    document.getElementById('modal-title').innerText = "Mutate Ledger Line Point";
-    document.getElementById('f-piso-name').value = name;
-    document.getElementById('f-piso-amt').value = amt;
-    document.getElementById('f-piso-date').value = date;
-    
+    document.getElementById('modal-title').innerText = "Edit Piso Balance Line";
+    document.getElementById('f-piso-name').value = oldName;
+    document.getElementById('f-piso-amt').value = oldAmt;
+    document.getElementById('f-piso-date').value = oldDate;
     document.getElementById('modal-save-btn').onclick = async () => {
-        const { error } = await supabaseClient.from('piso_a_day').update({ member_name: document.getElementById('f-piso-name').value, amount: parseFloat(document.getElementById('f-piso-amt').value || 0), date_recorded: document.getElementById('f-piso-date').value }).eq('id', id);
-        handleDbResponse(error, "Micro-collection sequence ledger value modulated.", () => { closeModal(); fetchData('piso-day'); });
+        const { error } = await supabaseClient.from('piso_a_day').update({ 
+            member_name: document.getElementById('f-piso-name').value, 
+            amount: parseFloat(document.getElementById('f-piso-amt').value || 0), 
+            date_recorded: document.getElementById('f-piso-date').value 
+        }).eq('id', id);
+        handleDbResponse(error, "Piso collection balance row modified.", () => {
+            closeModal(); 
+            fetchData('piso-day');
+        });
     };
 }
 
-function openEditPollModal(id, name, desc) {
+function openEditPollModal(id, oldName, oldDesc) {
     openModal('poll');
-    document.getElementById('modal-title').innerText = "Mutate Ballot Parameter Matrix";
-    document.getElementById('f-poll-name').value = name;
-    document.getElementById('f-poll-desc').value = desc;
-    
+    document.getElementById('modal-title').innerText = "Edit Event Settings";
+    document.getElementById('f-poll-name').value = oldName;
+    document.getElementById('f-poll-desc').value = oldDesc;
     document.getElementById('modal-save-btn').onclick = async () => {
-        const { error } = await supabaseClient.from('event_polls').update({ event_name: document.getElementById('f-poll-name').value, description: document.getElementById('f-poll-desc').value }).eq('id', id);
-        handleDbResponse(error, "Ballot configuration mutated successfully.", () => { closeModal(); fetchData('polls'); });
+        const { error } = await supabaseClient.from('event_polls').update({ 
+            event_name: document.getElementById('f-poll-name').value, 
+            description: document.getElementById('f-poll-desc').value 
+        }).eq('id', id);
+        handleDbResponse(error, "Proposition properties calibrated cleanly.", () => {
+            closeModal(); 
+            fetchData('polls');
+        });
     };
 }
 
-function openEditFundModal(id, type, amt, date, rem) {
+function openEditFundModal(id, oldType, oldAmt, oldDate, oldRem) {
     openModal('fund');
-    document.getElementById('modal-title').innerText = "Mutate Accounting Log Record";
-    document.getElementById('f-fund-type').value = type;
-    document.getElementById('f-fund-amt').value = amt;
-    document.getElementById('f-fund-date').value = date;
-    document.getElementById('f-fund-rem').value = rem;
-    
+    document.getElementById('modal-title').innerText = "Edit Fund Row Properties";
+    document.getElementById('f-fund-type').value = oldType;
+    document.getElementById('f-fund-amt').value = oldAmt;
+    document.getElementById('f-fund-date').value = oldDate;
+    document.getElementById('f-fund-rem').value = oldRem;
     document.getElementById('modal-save-btn').onclick = async () => {
         const { error } = await supabaseClient.from('church_funds').update({ 
             type: document.getElementById('f-fund-type').value, 
@@ -565,91 +663,6 @@ function openEditFundModal(id, type, amt, date, rem) {
             fetchData('funds');
         });
     };
-}
-
-// ==========================================
-// CELEBRATIONS CALENDAR CALCULATION
-// ==========================================
-async function renderBirthdayCalendar() {
-    const container = document.getElementById('birthday-list-container');
-    const monthBadge = document.getElementById('current-month-badge');
-    if (!container) return;
-
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const currentMonthIdx = new Date().getMonth(); 
-    if (monthBadge) monthBadge.textContent = months[currentMonthIdx];
-
-    try {
-        const { data: officersWithBday } = await supabaseClient.from('church_officers').select('name, position, birthday');
-        const { data: membersWithBday } = await supabaseClient.from('members').select('full_name, birthday');
-
-        let activeBirthdays = [];
-
-        if (officersWithBday) {
-            officersWithBday.forEach(o => {
-                if (o.birthday) {
-                    const bDate = new Date(o.birthday);
-                    if (!isNaN(bDate)) {
-                        activeBirthdays.push({
-                            name: o.name,
-                            role: o.position || 'Officer',
-                            month: bDate.getMonth(),
-                            day: bDate.getDate(),
-                            isOfficer: true
-                        });
-                    }
-                }
-            });
-        }
-
-        if (membersWithBday) {
-            membersWithBday.forEach(m => {
-                if (m.birthday) {
-                    const bDate = new Date(m.birthday);
-                    if (!isNaN(bDate)) {
-                        activeBirthdays.push({
-                            name: m.full_name,
-                            role: 'Member',
-                            month: bDate.getMonth(),
-                            day: bDate.getDate(),
-                            isOfficer: false
-                        });
-                    }
-                }
-            });
-        }
-
-        // Filter for current calendar month
-        activeBirthdays = activeBirthdays.filter(b => b.month === currentMonthIdx).sort((a, b) => a.day - b.day);
-
-        if (activeBirthdays.length === 0) {
-            container.innerHTML = `<p class="text-sm text-slate-500 col-span-2 py-6 text-center italic">No celebrations listed for this month.</p>`;
-            return;
-        }
-
-        container.innerHTML = activeBirthdays.map(b => `
-            <div class="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${b.isOfficer ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-pink-500/10 text-pink-400 border border-pink-500/20'}">
-                        ${b.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-semibold text-white tracking-wide">${b.name}</h4>
-                        <p class="text-xs text-slate-400">${b.role}</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <span class="text-xs font-black text-pink-400 bg-pink-500/10 px-2.5 py-1 rounded-md tracking-wider">
-                        ${months[b.month].substring(0, 3)} ${b.day}
-                    </span>
-                </div>
-            </div>
-        `).join('');
-
-    } catch (err) {
-        console.error("Birthday tracking runtime intercept error:", err);
-        container.innerHTML = `<p class="text-xs text-rose-400 col-span-2 text-center">Celebration matrix offline.</p>`;
-    }
 }
 
 // ==========================================
@@ -674,4 +687,7 @@ window.openEditMeetingModal = openEditMeetingModal;
 window.openEditPisoModal = openEditPisoModal;
 window.openEditPollModal = openEditPollModal;
 window.openEditFundModal = openEditFundModal;
-window.renderBirthdayCalendar = renderBirthdayCalendar;
+
+document.addEventListener('DOMContentLoaded', () => {
+    applyPermissions();
+});
