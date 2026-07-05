@@ -1,673 +1,485 @@
-// ==========================================
-// CONFIGURATION & INITIALIZATION
-// ==========================================
-const SUPABASE_URL = "https://nbcuzewrgdfdaiowbovc.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_xVZvbjf4t0vRSZCWluJlag_VAURlr6h";
-
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let isAdmin = false;
-
-// Helper to handle and display database errors transparently
-function handleDbResponse(error, successMessage, callback) {
-    if (error) {
-        console.error("Database Error Details:", error);
-        alert(`❌ Database Operation Failed: ${error.message || error.details}\n\nPlease check your Supabase RLS (Row Level Security) policies for this table.`);
-    } else {
-        if (successMessage) alert(`✅ ${successMessage}`);
-        if (callback) callback();
-    }
-}
-
-// ==========================================
-// CORE NAVIGATION & PERMISSIONS (WITH MOBILE SLIDE)
-// ==========================================
-function toggleMobileSidebar() {
-    const sidebar = document.getElementById('sidebar-panel');
-    const overlay = document.getElementById('sidebar-overlay');
-    if (sidebar.classList.contains('-translate-x-full')) {
-        sidebar.classList.remove('-translate-x-full');
-        overlay.classList.remove('hidden');
-    } else {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
-    }
-}
-
-function switchTab(tabName) {
-    const allTabs = document.querySelectorAll('.tab-content');
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nasug-ong Evangelical Church Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    // Smooth transition pipeline layout
-    allTabs.forEach(el => {
-        el.classList.remove('tab-active');
-        el.classList.add('hidden');
-    });
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    const targetTab = document.getElementById(`tab-${tabName}`);
-    if (targetTab) {
-        targetTab.classList.remove('hidden');
-        // Force Reflow sequence execution to cleanly reset modern transformations
-        void targetTab.offsetWidth; 
-        targetTab.classList.add('tab-active');
-    }
-    
-    // Update active state navigation highlighting with luxury sliding styles
-    document.querySelectorAll('[data-tab]').forEach(btn => {
-        if (btn.getAttribute('data-tab') === tabName) {
-            btn.classList.add('bg-amber-500/10', 'text-amber-400', 'border-l-4', 'border-amber-500', 'pl-6');
-            btn.classList.remove('text-slate-400', 'hover:bg-white/5');
-        } else {
-            btn.classList.remove('bg-amber-500/10', 'text-amber-400', 'border-l-4', 'border-amber-500', 'pl-6');
-            btn.classList.add('text-slate-400', 'hover:bg-white/5');
+    <style> 
+        /* Premium Global Font Reset */
+        *, body { 
+            font-family: 'Plus Jakarta Sans', sans-serif !important; 
+            box-sizing: border-box;
         }
-    });
+        .hidden { display: none !important; } 
 
-    // Auto close menu drawer when clicked on mobile layouts
-    const sidebar = document.getElementById('sidebar-panel');
-    if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
-        toggleMobileSidebar();
-    }
-
-    if (tabName === 'dashboard' || tabName === 'announcements') {
-        renderBirthdayCalendar();
-    }
-
-    fetchData(tabName);
-}
-
-function toggleViewMode(asGuest) {
-    document.getElementById('auth-container').classList.add('hidden');
-    document.getElementById('app-container').classList.remove('hidden');
-    isAdmin = !asGuest;
-    
-    const roleBadge = document.getElementById('user-role-badge');
-    if (isAdmin) {
-        roleBadge.innerText = "Admin Node Access Authorized";
-        roleBadge.className = "block text-[10px] bg-amber-500/10 border border-amber-500/30 py-2.5 px-3 rounded-xl text-center mb-2.5 font-black tracking-widest text-amber-400 uppercase shadow-md shadow-amber-500/5";
-    } else {
-        roleBadge.innerText = "Member View (Read-Only Mode)";
-        roleBadge.className = "block text-[10px] bg-white/5 border border-white/5 py-2.5 px-3 rounded-xl text-center mb-2.5 font-black tracking-widest text-slate-400 uppercase shadow-inner";
-    }
-    
-    applyPermissions();
-    switchTab('announcements');
-}
-
-function applyPermissions() {
-    document.querySelectorAll('.admin-only').forEach(el => {
-        if (isAdmin) {
-            el.classList.remove('hidden');
-        } else {
-            el.classList.add('hidden');
+        /* Custom Easing for Hardware-Accelerated Animations */
+        :root {
+            --premium-bezier: cubic-bezier(0.25, 1, 0.5, 1);
         }
-    });
-}
 
-// ==========================================
-// SYSTEM ACCESS SECURITY AUTH
-// ==========================================
-async function login() {
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-    
-    if (!email || !password) {
-        alert("Please completely supply authentication strings.");
-        return;
-    }
-
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) {
-        alert("Invalid login strings: " + error.message);
-    } else {
-        toggleViewMode(false);
-    }
-}
-
-function logout() {
-    supabaseClient.auth.signOut();
-    isAdmin = false;
-    document.getElementById('app-container').classList.add('hidden');
-    document.getElementById('auth-container').classList.remove('hidden');
-    
-    document.getElementById('login-email').value = '';
-    document.getElementById('login-password').value = '';
-}
-
-// ==========================================
-// FETCH REPOSITORY MODULES & STRUCTURAL RENDERERS
-// ==========================================
-async function fetchData(tab) {
-    // 1. ANNOUNCEMENTS
-    if (tab === 'announcements') {
-        let { data, error } = await supabaseClient.from('announcements').select('*').order('created_at', { ascending: false });
-        let container = document.getElementById('announcements-list');
+        /* Ultra-Smooth Tab Transition Framework */
+        .tab-content {
+            opacity: 0;
+            transform: translateY(16px) scale(0.98);
+            transition: opacity 0.5s var(--premium-bezier), transform 0.5s var(--premium-bezier);
+        }
+        .tab-content.tab-active {
+            display: block !important;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
         
-        if (error) console.error(error);
-        container.innerHTML = data?.map(item => `
-            <div class="premium-card border-l-4 border-amber-500/80 flex flex-col sm:flex-row justify-between items-start gap-4">
-                <div class="flex-1">
-                    <h3 class="text-xl font-extrabold text-white tracking-wide">${item.title}</h3>
-                    <p class="text-slate-300 mt-2.5 text-sm md:text-base leading-relaxed font-medium">${item.content}</p>
-                </div>
-                <div class="admin-only flex gap-2.5 sm:ml-auto shrink-0 pt-2 sm:pt-0">
-                    <button onclick="openEditModal('announcement', ${item.id}, \`${item.title.replace(/"/g, '&quot;')}\`, \`${item.content.replace(/"/g, '&quot;')}\`)" class="btn-edit">Edit</button>
-                    <button onclick="deleteData('announcements', ${item.id})" class="btn-delete">Remove</button>
-                </div>
-            </div>`).join('') || '<div class="premium-card text-center py-6 text-slate-400 italic">No announcements mapped to this relational node.</div>';
-    }
-
-    // 2. TIMELINE SCHEDULE METRICS
-    if (tab === 'schedule') {
-        const selectedSunday = document.getElementById('sunday-filter').value;
-        let { data, error } = await supabaseClient.from('monthly_schedules').select('*').eq('sunday_week', selectedSunday);
-        let container = document.getElementById('schedule-container');
-        
-        if (error) console.error(error);
-
-        if (!data || data.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-12 premium-card border border-dashed border-white/10">
-                    <p class="text-slate-400 italic text-sm">No configuration timeline layout assigned for <b class="text-amber-400">${selectedSunday}</b>.</p>
-                    <button onclick="setupCustomSunday('${selectedSunday}')" class="admin-only btn-premium-shimmer text-[#090d16] mt-5 px-5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider">+ Create Template For This Week</button>
-                </div>
-            `;
-            applyPermissions();
-            return;
+        /* Deep Glassmorphic Base UI Structure */
+        .bg-section-glass {
+            background: rgba(13, 17, 28, 0.7) !important; 
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        let sched = data[0];
-        container.innerHTML = `
-            <div class="flex flex-col lg:flex-row justify-between items-start gap-4 border-b border-white/5 pb-5 mb-6">
-                <div class="flex-1 w-full">
-                    <h3 class="text-2xl font-black text-amber-400 tracking-wide">${sched.sunday_week} Configuration Matrix</h3>
-                    <div class="bg-amber-500/5 p-4 rounded-xl my-4 border border-amber-500/20 max-w-3xl">
-                        <span class="font-black uppercase tracking-widest text-[10px] block text-amber-500 mb-1.5">Weekly Scripture Highlight</span>
-                        <p class="text-amber-200/90 italic font-medium text-sm leading-relaxed">"${sched.verse || 'No verse assigned.'}"</p>
-                    </div>
+        .glass-sidebar {
+            background: rgba(7, 9, 15, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Premium Micro-Interactive Content Cards */
+        .premium-card {
+            background: rgba(20, 25, 41, 0.55) !important;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.04) !important;
+            padding: 1.5rem !important;
+            border-radius: 1.25rem !important;
+            transition: transform 0.4s var(--premium-bezier), 
+                        background-color 0.4s var(--premium-bezier), 
+                        border-color 0.4s var(--premium-bezier), 
+                        box-shadow 0.4s var(--premium-bezier);
+        }
+        .premium-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            background: rgba(26, 32, 53, 0.8) !important;
+            border-color: rgba(245, 158, 11, 0.3) !important;
+            box-shadow: 0 20px 35px -10px rgba(245, 158, 11, 0.08), 0 30px 60px -15px rgba(0, 0, 0, 0.6) !important;
+        }
+
+        /* High-End Input Focus Transition Wrapper */
+        .premium-input-group {
+            position: relative;
+            transition: transform 0.4s var(--premium-bezier);
+        }
+        .premium-input-group input {
+            transition: border-color 0.4s var(--premium-bezier), 
+                        box-shadow 0.4s var(--premium-bezier), 
+                        transform 0.4s var(--premium-bezier),
+                        background-color 0.4s var(--premium-bezier);
+            transform-origin: center;
+        }
+        .premium-input-group input:focus {
+            border-color: rgba(245, 158, 11, 0.7) !important;
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.25), inset 0 0 0 1px rgba(245, 158, 11, 0.5) !important;
+            transform: scale(1.015);
+            background-color: rgba(0, 0, 0, 0.45) !important;
+        }
+        .premium-input-group:focus-within {
+            z-index: 10;
+        }
+
+        /* Floating Input Labels */
+        .premium-input-group label {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            pointer-events: none;
+            transition: all 0.3s var(--premium-bezier);
+            font-size: 0.875rem;
+        }
+        .premium-input-group input:focus ~ label,
+        .premium-input-group input:not(:placeholder-shown) ~ label {
+            top: 25%;
+            font-size: 0.7rem;
+            color: #fbbf24;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        /* World-Class Shimmer Button Design */
+        .btn-premium-shimmer {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #b45309 100%);
+            background-size: 200% auto;
+            transition: all 0.4s var(--premium-bezier);
+        }
+        .btn-premium-shimmer:hover {
+            background-position: right center;
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 12px 28px rgba(245, 158, 11, 0.35);
+        }
+        .btn-premium-shimmer:active {
+            transform: translateY(1px) scale(0.99);
+        }
+        .btn-premium-shimmer::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 30%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.25) 50%,
+                rgba(255, 255, 255, 0) 100
+            );
+            transform: rotate(25deg);
+        }
+        .btn-premium-shimmer:hover::after {
+            left: 140%;
+            transition: all 0.85s ease-in-out;
+        }
+
+        /* Standardized Action Controls */
+        .btn-edit {
+            background: rgba(245, 158, 11, 0.08) !important;
+            color: #fbbf24 !important;
+            border: 1px solid rgba(245, 158, 11, 0.2) !important;
+            padding: 0.45rem 0.9rem !important;
+            border-radius: 0.6rem !important;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.25s var(--premium-bezier);
+        }
+        .btn-edit:hover {
+            background-color: rgba(245, 158, 11, 1) !important;
+            color: #090d16 !important;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.08) !important;
+            color: #f87171 !important;
+            border: 1px solid rgba(239, 68, 68, 0.2) !important;
+            padding: 0.45rem 0.9rem !important;
+            border-radius: 0.6rem !important;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.25s var(--premium-bezier);
+        }
+        .btn-delete:hover {
+            background-color: rgba(239, 68, 68, 1) !important;
+            color: white !important;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Church Representatives Premium Cards Dark Harmonization */
+        #officers-grid > div {
+            background: rgba(15, 23, 42, 0.65) !important; 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: #f1f5f9 !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+        }
+        #officers-grid > div h3 { color: #ffffff !important; }
+        #officers-grid > div p { color: #fbbf24 !important; font-weight: 700; }
+
+        /* Smooth Custom Layout Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.3); }
+    </style>
+</head>
+<body class="bg-[#060813] text-slate-100 antialiased tracking-tight min-h-screen">
+
+    <div id="auth-container" class="min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat relative bg-fixed px-4 py-8" style="background-image: url('churchlogo.png.jpg');">
+        <div class="absolute inset-0 bg-[#040610]/85 pointer-events-none backdrop-blur-sm"></div>
+
+        <div class="relative w-full max-w-[940px] rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.85)] border border-white/10 bg-[#0d111c]/80 backdrop-blur-3xl overflow-hidden grid grid-cols-1 md:grid-cols-12 transform transition-all duration-700 hover:border-white/15">
+            
+            <div class="p-8 md:p-12 md:col-span-5 bg-gradient-to-b from-black/40 to-black/10 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-white/5 relative group">
+                <div class="absolute inset-0 bg-amber-500/2 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+                <div class="w-28 h-28 mb-5 overflow-hidden rounded-full border-2 border-amber-500/40 bg-[#161a26] flex items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.15)] transform transition-transform duration-500 group-hover:scale-105">
+                    <img src="churchlogo.png.jpg" alt="NEC Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" class="w-full h-full object-cover">
+                    <span class="hidden text-4xl">⛪</span>
                 </div>
-                <button onclick="deleteData('monthly_schedules', ${sched.id})" class="admin-only bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer tracking-wider uppercase shrink-0 mt-2 lg:mt-0">Drop Configuration Layout</button>
+                <h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-300 tracking-wide">
+                    NEC YOUTH PORTAL
+                </h2>
+                <div class="h-[2px] w-12 bg-amber-500/50 my-3 rounded-full"></div>
+                <p class="text-[11px] text-amber-400 font-black tracking-[0.25em] uppercase">
+                    Nasug-ong Evangelical Church
+                </p>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-slate-200 bg-black/10 p-5 rounded-2xl border border-white/5 mb-6">
-                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">🎤 Worship Leader</span><strong class="text-white text-sm font-bold">${sched.worship_leader || 'Unassigned'}</strong></div>
-                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">🎶 Vocal Array Support</span><strong class="text-white text-sm font-bold">${sched.backup_singers || 'Unassigned'}</strong></div>
-                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">🎸 Lead Guitarist</span><strong class="text-white text-sm font-bold">${sched.guitar || 'Unassigned'}</strong></div>
-                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">🎸 Bassist Node</span><strong class="text-white text-sm font-bold">${sched.bass || 'Unassigned'}</strong></div>
-                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">🥁 Rhythm / Drums</span><strong class="text-white text-sm font-bold">${sched.drummer || 'Unassigned'}</strong></div>
-                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">🎹 Synthesizer / Keys</span><strong class="text-white text-sm font-bold">${sched.keyboard || 'Unassigned'}</strong></div>
-                <div class="p-3.5 bg-[#14192a]/50 rounded-xl border border-white/5 sm:col-span-2 lg:col-span-3"><span class="block text-[10px] uppercase tracking-widest text-slate-400 font-extrabold mb-1">💻 Projection / Lyrics Operator</span><strong class="text-white text-sm font-bold">${sched.multimedia || 'Unassigned'}</strong></div>
+
+            <div class="p-8 md:p-12 md:col-span-7 flex flex-col justify-center gap-6 bg-[#0c0f19]/40">
+                <div>
+                    <h3 class="text-2xl font-black text-white tracking-tight">Account Authentication</h3>
+                    <p class="text-xs text-slate-400 mt-1">Provide administrator credentials to gain secure terminal access.</p>
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="premium-input-group">
+                        <input type="email" id="login-email" placeholder=" " 
+                               class="w-full p-4 pt-5 pb-3 border border-white/10 rounded-xl focus:outline-none bg-black/20 text-white text-sm">
+                        <label for="login-email">Email Address</label>
+                    </div>
+                    
+                    <div class="premium-input-group">
+                        <input type="password" id="login-password" placeholder=" " 
+                               class="w-full p-4 pt-5 pb-3 border border-white/10 rounded-xl focus:outline-none bg-black/20 text-white text-sm">
+                        <label for="login-password">Password</label>
+                    </div>
+                    
+                    <button onclick="login()" class="btn-premium-shimmer w-full text-[#090d16] p-4 rounded-xl font-black cursor-pointer text-xs uppercase tracking-wider mt-2">
+                        Verify Credentials
+                    </button>
+                </div>
+
+                <div class="relative flex py-1 items-center">
+                    <div class="flex-grow border-t border-white/5"></div>
+                    <span class="flex-shrink mx-4 text-[10px] text-slate-500 font-bold tracking-widest uppercase">Or</span>
+                    <div class="flex-grow border-t border-white/5"></div>
+                </div>
+
+                <div>
+                    <button onclick="toggleViewMode(true)" class="w-full text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer tracking-wider uppercase bg-white/5 hover:bg-white/10 border border-white/10 py-3.5 rounded-xl text-center block shadow-inner">
+                        View As Member <span class="text-amber-400 font-medium lowercase italic ml-1">(read-only mode)</span>
+                    </button>
+                </div>
             </div>
-            <button onclick="openEditScheduleModal(${sched.id}, \`${sched.sunday_week}\`, \`${(sched.verse || '').replace(/"/g, '&quot;')}\`, \`${(sched.worship_leader || '').replace(/"/g, '&quot;')}\`, \`${(sched.backup_singers || '').replace(/"/g, '&quot;')}\`, \`${(sched.guitar || '').replace(/"/g, '&quot;')}\`, \`${(sched.bass || '').replace(/"/g, '&quot;')}\`, \`${(sched.drummer || '').replace(/"/g, '&quot;')}\`, \`${(sched.keyboard || '').replace(/"/g, '&quot;')}\`, \`${(sched.multimedia || '').replace(/"/g, '&quot;')}\`)" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider">✏️ Mutate Line-up Configuration</button>
-        `;
-    }
+        </div>
+    </div>
 
-    // 3. CHURCH REPRESENTATIVES (With Gradient Halo Ring Design Wrapper)
-    if (tab === 'officers-list') {
-        let { data, error } = await supabaseClient.from('church_officers').select('*').order('created_at', { ascending: true });
-        let container = document.getElementById('officers-grid');
-        
-        if (error) console.error(error);
-        container.innerHTML = data?.map(item => `
-            <div class="premium-card flex flex-col items-center text-center group transition-all duration-300">
-                <div class="relative w-24 h-24 rounded-full p-0.5 bg-gradient-to-tr from-amber-600 via-amber-400/20 to-amber-300 border border-white/10 shadow-lg overflow-hidden flex items-center justify-center mb-3.5 group-hover:scale-105 transition-transform duration-500">
-                    <div class="absolute inset-0 bg-[#060813] rounded-full scale-[0.97] z-0"></div>
-                    <img src="${item.image_url || 'https://via.placeholder.com/200?text=No+Photo'}" class="w-full h-full object-cover rounded-full z-10 relative" alt="Officer">
+    <div id="app-container" class="min-h-screen flex flex-col lg:flex-row hidden bg-cover bg-center bg-no-repeat relative bg-fixed" style="background-image: url('churchlogo.png.jpg');">
+        <div class="absolute inset-0 bg-[#040610]/92 pointer-events-none backdrop-blur-sm"></div>
+        <header class="lg:hidden w-full bg-[#07090f]/90 backdrop-blur-md border-b border-white/5 p-4 flex justify-between items-center sticky top-0 z-40 shadow-xl">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 overflow-hidden rounded-full border border-amber-500/20">
+                    <img src="churchlogo.png.jpg" alt="NEC Logo" class="w-full h-full object-cover">
                 </div>
-                <h3 class="font-extrabold text-base tracking-wide line-clamp-1 text-white">${item.name}</h3>
-                <p class="font-black text-[10px] tracking-widest uppercase mt-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-0.5 rounded-full">${item.position}</p>
-                <div class="admin-only mt-4 flex gap-2 justify-center w-full border-t border-white/5 pt-3">
-                    <button onclick="openEditOfficerModal(${item.id}, '${item.name}', '${item.position}', '${item.image_url || ''}')" class="btn-edit text-[10px] px-2.5 py-1.5">Edit</button>
-                    <button onclick="deleteData('church_officers', ${item.id})" class="btn-delete text-[10px] px-2.5 py-1.5">Remove</button>
-                </div>
-            </div>`).join('') || '<div class="premium-card text-center py-6 text-slate-400 italic sm:col-span-2 lg:col-span-4">No executive profiles deployed inside the cluster.</div>';
-    }
+                <span class="text-xs font-black tracking-widest text-white uppercase">NEC Portal</span>
+            </div>
+            <button onclick="toggleMobileSidebar()" class="text-slate-300 hover:text-amber-400 transition-colors p-2 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+        </header>
 
-    // 4. STRATEGIC COUNCIL MEETINGS
-    if (tab === 'officers-meetings') {
-        let { data, error } = await supabaseClient.from('officer_plans').select('*').order('meeting_date', { ascending: false });
-        let container = document.getElementById('meetings-list');
-        
-        if (error) console.error(error);
-        container.innerHTML = data?.map(item => `
-            <div class="premium-card flex flex-col justify-between items-start gap-4">
-                <div class="w-full">
-                    <span class="inline-block bg-white/5 border border-white/10 text-slate-300 text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest mb-3 shadow-inner">📅 Node Date: ${item.meeting_date}</span>
-                    <h3 class="text-xl font-extrabold text-white tracking-wide">${item.title}</h3>
-                    <p class="text-slate-400 mt-2 text-sm leading-relaxed font-medium">${item.description || 'No descriptive logic documentation mapped.'}</p>
-                </div>
-                <div class="admin-only flex gap-2.5 border-t border-white/5 pt-3.5 w-full justify-end shrink-0">
-                    <button onclick="openEditMeetingModal(${item.id}, \`${item.title.replace(/"/g, '&quot;')}\`, '${item.meeting_date}', \`${(item.description || '').replace(/"/g, '&quot;')}\`)" class="btn-edit">Edit</button>
-                    <button onclick="deleteData('officer_plans', ${item.id})" class="btn-delete">Remove</button>
-                </div>
-            </div>`).join('') || '<div class="premium-card text-center py-6 text-slate-400 italic sm:col-span-2">No meeting data vectors recorded.</div>';
-    }
-
-    // 5. MICRO-COLLECTION PISO TRACKER
-    if (tab === 'piso-day') {
-        let { data, error } = await supabaseClient.from('piso_a_day').select('*').order('date_recorded', { ascending: false });
-        if (error) console.error(error);
-        
-        document.getElementById('piso-table-body').innerHTML = data?.map(item => `
-            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors font-medium">
-                <td class="p-4 pl-6 text-sm text-white">${item.member_name}</td>
-                <td class="p-4 text-emerald-400 font-extrabold tracking-wide text-sm">₱${item.amount.toLocaleString()}</td>
-                <td class="p-4 text-slate-400 text-xs tracking-wider">${item.date_recorded}</td>
-                <td class="admin-only p-4 text-center">
-                    <div class="flex gap-2 justify-center">
-                        <button onclick="openEditPisoModal(${item.id}, \`${item.member_name.replace(/"/g, '&quot;')}\`, ${item.amount}, '${item.date_recorded}')" class="btn-edit text-[10px]">Edit</button>
-                        <button onclick="deleteData('piso_a_day', ${item.id})" class="btn-delete text-[10px]">Remove</button>
+        <aside id="sidebar-panel" class="fixed inset-y-0 left-0 w-72 lg:sticky lg:top-0 h-screen glass-sidebar text-slate-200 flex flex-col justify-between p-6 shadow-[10px_0_40px_rgba(0,0,0,0.6)] z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shrink-0">
+            <div>
+                <div class="flex flex-col items-center text-center border-b border-white/5 pb-6 mb-6 relative">
+                    <button onclick="toggleMobileSidebar()" class="lg:hidden absolute top-0 right-0 text-slate-400 hover:text-red-400 p-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <div class="w-20 h-20 overflow-hidden rounded-full border-2 border-amber-500/20 bg-white/5 p-1 flex items-center justify-center mb-3 shadow-2xl">
+                        <img src="churchlogo.png.jpg" alt="NEC Logo" class="w-full h-full object-cover rounded-full">
                     </div>
-                </td>
-            </tr>`).join('') || '<tr><td colspan="4" class="p-8 text-center text-slate-400 italic text-sm font-medium">No ledger lines allocated inside the module.</td></tr>';
-    }
-
-    // 6. PROPOSALS & ELECTIONS
-    if (tab === 'polls') {
-        let { data, error } = await supabaseClient.from('event_polls').select('*').order('created_at', { ascending: false });
-        let container = document.getElementById('polls-list');
-        
-        if (error) console.error(error);
-        container.innerHTML = data?.map(item => `
-            <div class="premium-card flex flex-col justify-between text-center transition-all">
-                <div>
-                    <h3 class="text-xl font-extrabold text-white tracking-wide">${item.event_name}</h3>
-                    <p class="text-slate-400 text-xs mt-2 leading-relaxed font-medium line-clamp-3">${item.description || 'No concept description supplied.'}</p>
+                    <h1 class="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">NEC PORTAL</h1>
+                    <p class="text-[9px] text-amber-400 font-black tracking-[0.3em] uppercase mt-1 bg-amber-500/5 px-2.5 py-0.5 rounded-full border border-amber-500/10">Youth Dashboard</p>
                 </div>
-                <div>
-                    <div class="my-4 bg-black/30 border border-white/5 p-4 rounded-xl shadow-inner group-hover:border-amber-500/10">
-                        <span class="block text-4xl font-black text-amber-400 tracking-tighter">${item.votes}</span>
-                        <span class="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1 block">Verified Assenting Votes</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <button onclick="voteEvent(${item.id}, ${item.votes})" class="w-full bg-[#1e2538] border border-white/10 hover:border-amber-500/30 hover:bg-amber-500 hover:text-[#090d16] text-slate-200 py-2.5 rounded-xl text-xs font-extrabold transition-all uppercase tracking-wider cursor-pointer">👍 Affirm Proposition</button>
-                        <div class="admin-only flex justify-center gap-2 mt-2.5 border-t border-white/5 pt-2.5 w-full">
-                            <button onclick="openEditPollModal(${item.id}, \`${item.event_name.replace(/"/g, '&quot;')}\`, \`${(item.description || '').replace(/"/g, '&quot;')}\`)" class="btn-edit text-[10px]">Edit</button>
-                            <button onclick="deleteData('event_polls', ${item.id})" class="btn-delete text-[10px]">Remove</button>
-                        </div>
-                    </div>
-                </div>
-            </div>`).join('') || '<p class="text-slate-400 italic text-sm text-center py-6 sm:col-span-2 lg:col-span-3">No active event layouts proposed.</p>';
-    }
+                
+                <div id="user-role-badge"></div>
 
-    // 7. FINANCIAL ACCOUNTING
-    if (tab === 'funds') {
-        let { data, error } = await supabaseClient.from('church_funds').select('*').order('date_recorded', { ascending: false });
-        if (error) console.error(error);
-        
-        document.getElementById('funds-table-body').innerHTML = data?.map(item => `
-            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors font-medium">
-                <td class="p-4 pl-6 text-xs font-black"><span class="inline-block px-3 py-1 rounded-md bg-[#131724] text-amber-400 border border-white/5 shadow-inner uppercase tracking-wider">${item.type}</span></td>
-                <td class="p-4 text-emerald-400 font-extrabold tracking-wide text-sm">₱${item.amount.toLocaleString()}</td>
-                <td class="p-4 text-slate-400 text-xs tracking-wider">${item.date_recorded}</td>
-                <td class="p-4 text-slate-300 text-xs italic font-normal max-w-xs truncate">${item.remarks || '—'}</td>
-                <td class="admin-only p-4 text-center">
-                    <div class="flex gap-2 justify-center">
-                        <button onclick="openEditFundModal(${item.id}, '${item.type}', ${item.amount}, '${item.date_recorded}', \`${(item.remarks || '').replace(/"/g, '&quot;')}\`)" class="btn-edit text-[10px]">Edit</button>
-                        <button onclick="deleteData('church_funds', ${item.id})" class="btn-delete text-[10px]">Remove</button>
-                    </div>
-                </td>
-            </tr>`).join('') || '<tr><td colspan="5" class="p-8 text-center text-slate-400 italic text-sm font-medium">No transparent ledger balance sheets detected.</td></tr>';
-    }
-    applyPermissions();
-}
+                <nav class="space-y-1.5">
+                    <button data-tab="announcements" onclick="switchTab('announcements')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
+                        Announcements
+                    </button>
+                    <button data-tab="schedule" onclick="switchTab('schedule')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
+                        Sunday Linup Configuration
+                    </button>
+                    <button data-tab="officers-list" onclick="switchTab('officers-list')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
+                        Church Representatives
+                    </button>
+                    <button data-tab="officers-meetings" onclick="switchTab('officers-meetings')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
+                        Strategic Council Meetings
+                    </button>
+                    <button data-tab="piso-day" onclick="switchTab('piso-day')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
+                        Micro-Collection Ledger
+                    </button>
+                    <button data-tab="polls" onclick="switchTab('polls')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
+                        Proposals & Elections
+                    </button>
+                    <button data-tab="funds" onclick="switchTab('funds')" class="w-full flex items-center gap-3.5 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide transition-all border border-transparent cursor-pointer">
+                        Financial Transparent Index
+                    </button>
+                </nav>
+            </div>
+            
+            <button onclick="logout()" class="w-full border border-rose-500/20 hover:border-rose-500 bg-rose-500/5 hover:bg-rose-500 hover:text-white text-rose-400 p-3.5 rounded-xl font-bold text-xs uppercase tracking-widest cursor-pointer transition-all mt-6">
+                Disconnect Interaction
+            </button>
+        </aside>
 
-// ==========================================
-// SYSTEM OPERATIONAL ACTIONS (VOTE, SYSTEM MUTATION)
-// ==========================================
-async function deleteData(table, id) {
-    if (!isAdmin) {
-        alert("Access Denied: Administrative security level required.");
-        return;
-    }
-    if (confirm("Confirm database row drop sequence? This action cannot be reversed.")) {
-        const { error } = await supabaseClient.from(table).delete().eq('id', id);
-        let targetTab = table === 'piso_a_day' ? 'piso-day' : (table === 'officer_plans' ? 'officers-meetings' : (table === 'church_officers' ? 'officers-list' : (table === 'monthly_schedules' ? 'schedule' : (table === 'event_polls' ? 'polls' : (table === 'church_funds' ? 'funds' : table)))));
-        handleDbResponse(error, "Relational data segment dropped completely.", () => fetchData(targetTab));
-    }
-}
+        <div id="sidebar-overlay" onclick="toggleMobileSidebar()" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"></div>
 
-async function voteEvent(id, currentVotes) {
-    const { error } = await supabaseClient.from('event_polls').update({ votes: currentVotes + 1 }).eq('id', id);
-    handleDbResponse(error, "Assenting vote successfully verified.", () => fetchData('polls'));
-}
-
-async function setupCustomSunday(weekLabel) {
-    const { error } = await supabaseClient.from('monthly_schedules').insert([{
-        sunday_week: weekLabel,
-        verse: "For where two or three gather in my name, there am I with them.",
-        worship_leader: "", backup_singers: "", guitar: "", bass: "", drummer: "", keyboard: "", multimedia: ""
-    }]);
-    handleDbResponse(error, "Liturgical template layout initialized inside repository stream.", () => fetchData('schedule'));
-}
-
-// ==========================================
-// MODAL ARCHITECTURE CONTROLLER PIPELINE
-// ==========================================
-function openModal(type) {
-    const modal = document.getElementById('generic-modal');
-    const title = document.getElementById('modal-title');
-    const fields = document.getElementById('modal-fields');
-    const saveBtn = document.getElementById('modal-save-btn');
-    
-    modal.classList.remove('hidden');
-    fields.innerHTML = '';
-    
-    if (type === 'announcement') {
-        title.innerText = "Deploy Broadside Broadcast";
-        fields.innerHTML = `
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Broadcast Title</label><input type="text" id="f-ann-title" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Broadcast Text Layer</label><textarea id="f-ann-content" rows="4" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></textarea></div>
-        `;
-        saveBtn.onclick = async () => {
-            const { error } = await supabaseClient.from('announcements').insert([{ title: document.getElementById('f-ann-title').value, content: document.getElementById('f-ann-content').value }]);
-            handleDbResponse(error, "New informational event vector deployed.", () => { closeModal(); fetchData('announcements'); });
-        };
-    }
-    
-    if (type === 'officer') {
-        title.innerText = "Deploy New Executive Officer Entity";
-        fields.innerHTML = `
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Officer Name String</label><input type="text" id="f-off-name" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Assigned Position Token</label><input type="text" id="f-off-pos" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Image Address Vector (URL)</label><input type="text" id="f-off-img" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        `;
-        saveBtn.onclick = async () => {
-            const { error } = await supabaseClient.from('church_officers').insert([{ name: document.getElementById('f-off-name').value, position: document.getElementById('f-off-pos').value, image_url: document.getElementById('f-off-img').value }]);
-            handleDbResponse(error, "Executive leadership profile appended into active tree.", () => { closeModal(); fetchData('officers-list'); });
-        };
-    }
-
-    if (type === 'meeting') {
-        title.innerText = "Log New Strategic Initiative Directive";
-        fields.innerHTML = `
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Directive Topic Heading</label><input type="text" id="f-meet-title" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Calendar Date Node</label><input type="date" id="f-meet-date" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Strategic Logic Manifest</label><textarea id="f-meet-desc" rows="4" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></textarea></div>
-        `;
-        saveBtn.onclick = async () => {
-            const { error } = await supabaseClient.from('officer_plans').insert([{ title: document.getElementById('f-meet-title').value, meeting_date: document.getElementById('f-meet-date').value, description: document.getElementById('f-meet-desc').value }]);
-            handleDbResponse(error, "Strategic blueprint locked inside historical database.", () => { closeModal(); fetchData('officers-meetings'); });
-        };
-    }
-
-    if (type === 'piso') {
-        title.innerText = "Allocate Micro-Collection Ledger Entry";
-        fields.innerHTML = `
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Participant Full Name</label><input type="text" id="f-piso-name" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Quantized Currency Value (PHP)</label><input type="number" id="f-piso-amt" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Timestamp Matrix Log Date</label><input type="date" id="f-piso-date" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        `;
-        saveBtn.onclick = async () => {
-            const { error } = await supabaseClient.from('piso_a_day').insert([{ member_name: document.getElementById('f-piso-name').value, amount: parseFloat(document.getElementById('f-piso-amt').value || 0), date_recorded: document.getElementById('f-piso-date').value }]);
-            handleDbResponse(error, "Micro-collection transactional logic point indexed.", () => { closeModal(); fetchData('piso-day'); });
-        };
-    }
-
-    if (type === 'poll') {
-        title.innerText = "Propose New Concept Ballot Node";
-        fields.innerHTML = `
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Target Proposition Heading</label><input type="text" id="f-poll-name" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Detailed Structural Scope</label><textarea id="f-poll-desc" rows="4" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></textarea></div>
-        `;
-        saveBtn.onclick = async () => {
-            const { error } = await supabaseClient.from('event_polls').insert([{ event_name: document.getElementById('f-poll-name').value, description: document.getElementById('f-poll-desc').value, votes: 0 }]);
-            handleDbResponse(error, "Conceptual democratic proposition uploaded.", () => { closeModal(); fetchData('polls'); });
-        };
-    }
-
-    if (type === 'fund') {
-        title.innerText = "Commit Transaction Line Entry";
-        fields.innerHTML = `
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Classification Tag</label><select id="f-fund-type" class="w-full bg-slate-900 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"><option value="Income">Income Pipeline Vector</option><option value="Expense">Expense Allocation Matrix</option></select></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Quantized Ledger Mass (PHP)</label><input type="number" id="f-fund-amt" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Audit Sequence Log Date</label><input type="date" id="f-fund-date" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-            <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Transactional Description Core</label><input type="text" id="f-fund-rem" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        `;
-        saveBtn.onclick = async () => {
-            const { error } = await supabaseClient.from('church_funds').insert([{ type: document.getElementById('f-fund-type').value, amount: parseFloat(document.getElementById('f-fund-amt').value || 0), date_recorded: document.getElementById('f-fund-date').value, remarks: document.getElementById('f-fund-rem').value }]);
-            handleDbResponse(error, "Transparent accounting audit trace fully validated.", () => { closeModal(); fetchData('funds'); });
-        };
-    }
-}
-
-function closeModal() {
-    document.getElementById('generic-modal').classList.add('hidden');
-}
-
-// ==========================================
-// EDIT MODAL ARCHITECTURE CONTROLLER INTERCEPTS
-// ==========================================
-function openEditModal(mode, id, oldTitle, oldContent) {
-    openModal('announcement');
-    document.getElementById('modal-title').innerText = "Mutate Broadcast Vector Trace";
-    document.getElementById('f-ann-title').value = oldTitle;
-    document.getElementById('f-ann-content').value = oldContent;
-    
-    document.getElementById('modal-save-btn').onclick = async () => {
-        const { error } = await supabaseClient.from('announcements').update({ title: document.getElementById('f-ann-title').value, content: document.getElementById('f-ann-content').value }).eq('id', id);
-        handleDbResponse(error, "Broadcast stream mutation processed cleanly.", () => { closeModal(); fetchData('announcements'); });
-    };
-}
-
-function openEditScheduleModal(id, sundayWeek, verse, wl, bsing, gtr, bs, dr, kb, multi) {
-    const modal = document.getElementById('generic-modal');
-    const title = document.getElementById('modal-title');
-    const fields = document.getElementById('modal-fields');
-    const saveBtn = document.getElementById('modal-save-btn');
-    
-    modal.classList.remove('hidden');
-    title.innerText = `Mutate ${sundayWeek} Matrix Mapping`;
-    fields.innerHTML = `
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Scripture Context</label><input type="text" id="f-sc-verse" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Worship Leader Anchor</label><input type="text" id="f-sc-wl" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Vocal Array Nodes</label><input type="text" id="f-sc-bs" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Lead Guitar Node</label><input type="text" id="f-sc-gtr" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Bassist Array Element</label><input type="text" id="f-sc-bass" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Rhythm / Drums Link</label><input type="text" id="f-sc-dr" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Synthesizer Operator</label><input type="text" id="f-sc-kb" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-        <div><label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Projection Node Target</label><input type="text" id="f-sc-multi" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none"></div>
-    `;
-    
-    document.getElementById('f-sc-verse').value = verse;
-    document.getElementById('f-sc-wl').value = wl;
-    document.getElementById('f-sc-bs').value = bsing;
-    document.getElementById('f-sc-gtr').value = gtr;
-    document.getElementById('f-sc-bass').value = bs;
-    document.getElementById('f-sc-dr').value = dr;
-    document.getElementById('f-sc-kb').value = kb;
-    document.getElementById('f-sc-multi').value = multi;
-
-    saveBtn.onclick = async () => {
-        const { error } = await supabaseClient.from('monthly_schedules').update({
-            verse: document.getElementById('f-sc-verse').value,
-            worship_leader: document.getElementById('f-sc-wl').value,
-            backup_singers: document.getElementById('f-sc-bs').value,
-            guitar: document.getElementById('f-sc-gtr').value,
-            bass: document.getElementById('f-sc-bass').value,
-            drummer: document.getElementById('f-sc-dr').value,
-            keyboard: document.getElementById('f-sc-kb').value,
-            multimedia: document.getElementById('f-sc-multi').value
-        }).eq('id', id);
-        handleDbResponse(error, "Liturgical line-up structure mutated globally.", () => { closeModal(); fetchData('schedule'); });
-    };
-}
-
-function openEditOfficerModal(id, name, pos, img) {
-    openModal('officer');
-    document.getElementById('modal-title').innerText = "Mutate Leadership Entity Signature";
-    document.getElementById('f-off-name').value = name;
-    document.getElementById('f-off-pos').value = pos;
-    document.getElementById('f-off-img').value = img;
-    
-    document.getElementById('modal-save-btn').onclick = async () => {
-        const { error } = await supabaseClient.from('church_officers').update({ name: document.getElementById('f-off-name').value, position: document.getElementById('f-off-pos').value, image_url: document.getElementById('f-off-img').value }).eq('id', id);
-        handleDbResponse(error, "Leadership profile changes structural lock verified.", () => { closeModal(); fetchData('officers-list'); });
-    };
-}
-
-function openEditMeetingModal(id, titleText, dateText, descText) {
-    openModal('meeting');
-    document.getElementById('modal-title').innerText = "Modify Council Directive Framework";
-    document.getElementById('f-meet-title').value = titleText;
-    document.getElementById('f-meet-date').value = dateText;
-    document.getElementById('f-meet-desc').value = descText;
-    
-    document.getElementById('modal-save-btn').onclick = async () => {
-        const { error } = await supabaseClient.from('officer_plans').update({ title: document.getElementById('f-meet-title').value, meeting_date: document.getElementById('f-meet-date').value, description: document.getElementById('f-meet-desc').value }).eq('id', id);
-        handleDbResponse(error, "Council initiative roadmap updated inside system parameters.", () => { closeModal(); fetchData('officers-meetings'); });
-    };
-}
-
-function openEditPisoModal(id, name, amt, date) {
-    openModal('piso');
-    document.getElementById('modal-title').innerText = "Mutate Ledger Line Point";
-    document.getElementById('f-piso-name').value = name;
-    document.getElementById('f-piso-amt').value = amt;
-    document.getElementById('f-piso-date').value = date;
-    
-    document.getElementById('modal-save-btn').onclick = async () => {
-        const { error } = await supabaseClient.from('piso_a_day').update({ member_name: document.getElementById('f-piso-name').value, amount: parseFloat(document.getElementById('f-piso-amt').value || 0), date_recorded: document.getElementById('f-piso-date').value }).eq('id', id);
-        handleDbResponse(error, "Micro-collection sequence ledger value modulated.", () => { closeModal(); fetchData('piso-day'); });
-    };
-}
-
-function openEditPollModal(id, name, desc) {
-    openModal('poll');
-    document.getElementById('modal-title').innerText = "Mutate Ballot Parameter Matrix";
-    document.getElementById('f-poll-name').value = name;
-    document.getElementById('f-poll-desc').value = desc;
-    
-    document.getElementById('modal-save-btn').onclick = async () => {
-        const { error } = await supabaseClient.from('event_polls').update({ event_name: document.getElementById('f-poll-name').value, description: document.getElementById('f-poll-desc').value }).eq('id', id);
-        handleDbResponse(error, "Ballot configuration mutated successfully.", () => { closeModal(); fetchData('polls'); });
-    };
-}
-
-function openEditFundModal(id, type, amt, date, rem) {
-    openModal('fund');
-    document.getElementById('modal-title').innerText = "Mutate Accounting Log Record";
-    document.getElementById('f-fund-type').value = type;
-    document.getElementById('f-fund-amt').value = amt;
-    document.getElementById('f-fund-date').value = date;
-    document.getElementById('f-fund-rem').value = rem;
-    
-    document.getElementById('modal-save-btn').onclick = async () => {
-        const { error } = await supabaseClient.from('church_funds').update({ 
-            type: document.getElementById('f-fund-type').value, 
-            amount: parseFloat(document.getElementById('f-fund-amt').value || 0), 
-            date_recorded: document.getElementById('f-fund-date').value, 
-            remarks: document.getElementById('f-fund-rem').value 
-        }).eq('id', id);
-        handleDbResponse(error, "Financial matrix audit line adjusted.", () => {
-            closeModal(); 
-            fetchData('funds');
-        });
-    };
-}
-
-// ==========================================
-// NEW FEATURE: COMPUTE AND RENDER BIRTHDAYS
-// ==========================================
-async function renderBirthdayCalendar() {
-    const container = document.getElementById('birthday-list-container');
-    const monthBadge = document.getElementById('current-month-badge');
-    if (!container) return;
-
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const currentMonthIdx = new Date().getMonth(); 
-    if (monthBadge) monthBadge.textContent = months[currentMonthIdx];
-
-    try {
-        const { data: officersWithBday } = await supabaseClient.from('church_officers').select('name, position, birthday');
-        const { data: membersWithBday } = await supabaseClient.from('members').select('full_name, birthday');
-
-        let activeBirthdays = [];
-
-        if (officersWithBday) {
-            officersWithBday.forEach(o => {
-                if (o.birthday) {
-                    const bDate = new Date(o.birthday);
-                    if (!isNaN(bDate)) {
-                        activeBirthdays.push({
-                            name: o.name,
-                            role: o.position || 'Officer',
-                            month: bDate.getMonth(),
-                            day: bDate.getDate(),
-                            isOfficer: true
-                        });
-                    }
-                }
-            });
-        }
-
-        if (membersWithBday) {
-            membersWithBday.forEach(m => {
-                if (m.birthday) {
-                    const bDate = new Date(m.birthday);
-                    if (!isNaN(bDate)) {
-                        activeBirthdays.push({
-                            name: m.full_name,
-                            role: 'Member',
-                            month: bDate.getMonth(),
-                            day: bDate.getDate(),
-                            isOfficer: false
-                        });
-                    }
-                }
-            });
-        }
-
-        // Filter for current calendar month
-        activeBirthdays = activeBirthdays.filter(b => b.month === currentMonthIdx).sort((a, b) => a.day - b.day);
-
-        if (activeBirthdays.length === 0) {
-            container.innerHTML = `<p class="text-sm text-slate-500 col-span-2 py-6 text-center italic">No celebrations listed for this month.</p>`;
-            return;
-        }
-
-        container.innerHTML = activeBirthdays.map(b => `
-            <div class="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${b.isOfficer ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-pink-500/10 text-pink-400 border border-pink-500/20'}">
-                        ${b.name.charAt(0).toUpperCase()}
-                    </div>
+        <main class="flex-1 p-4 md:p-8 lg:p-10 overflow-x-hidden relative">
+            
+            <section id="tab-announcements" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-section-glass p-6 rounded-2xl">
                     <div>
-                        <h4 class="text-sm font-semibold text-white tracking-wide">${b.name}</h4>
-                        <p class="text-xs text-slate-400">${b.role}</p>
+                        <h2 class="text-2xl font-black text-white tracking-wide">Announcements Feed</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Relational notification streams mapping community interaction matrices.</p>
+                    </div>
+                    <button onclick="openModal('announcement')" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-3 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider shadow-lg">+ Stream New Broadcast</button>
+                </div>
+                
+                <div class="bg-[#0f172a]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-pink-500/10 text-pink-400 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c0.521-1.291 0.454-2.822-0.454-3.928a4.906 4.906 0 00-3.111-1.397 4.907 4.907 0 00-4.086-2.115 4.906 4.906 0 00-4.086 2.115 4.906 4.906 0 00-3.112 1.397c-0.908 1.106-0.975 2.637-0.454 3.928a4.814 4.814 0 002.502 2.68 4.814 4.814 0 003.528 0c0.672-0.293 1.258-0.741 1.708-1.298 0.45 0.557 1.036 1.005 1.708 1.298a4.816 4.816 0 003.528 0 4.814 4.814 0 002.502-2.68zM12 12V3m0 0l-1.5 1.5M12 3l1.5 1.5" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Celebrations Calendar</h3>
+                                <p class="text-xs text-slate-400">Upcoming birthdays for Officers and Members</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-semibold bg-pink-500/20 text-pink-300 px-2.5 py-1 rounded-full uppercase tracking-wider" id="current-month-badge">This Month</span>
+                    </div>
+                    <div id="birthday-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto pr-1">
+                        <p class="text-sm text-slate-400 col-span-2 py-4 text-center">Loading celebrations...</p>
                     </div>
                 </div>
-                <div class="text-right">
-                    <span class="text-xs font-black text-pink-400 bg-pink-500/10 px-2.5 py-1 rounded-md tracking-wider">
-                        ${months[b.month].substring(0, 3)} ${b.day}
-                    </span>
+
+                <div id="announcements-list" class="space-y-4"></div>
+            </section>
+
+            <section id="tab-schedule" class="tab-content hidden bg-section-glass p-6 md:p-8 rounded-2xl space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5">
+                    <div>
+                        <h2 class="text-2xl font-black text-white tracking-wide">Liturgical Timeline Grid</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Manage and organize musicians, vocal arrays, and multimedia operator positions.</p>
+                    </div>
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider whitespace-nowrap">Week Node:</span>
+                        <select id="sunday-filter" onchange="fetchData('schedule')" class="bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2.5 text-sm font-bold text-amber-400 focus:outline-none focus:border-amber-500 transition-colors w-full sm:w-48 cursor-pointer shadow-inner">
+                            <option value="Sunday W1">Sunday Week 1</option>
+                            <option value="Sunday W2">Sunday Week 2</option>
+                            <option value="Sunday W3">Sunday Week 3</option>
+                            <option value="Sunday W4">Sunday Week 4</option>
+                            <option value="Sunday W5">Sunday Week 5</option>
+                        </select>
+                    </div>
                 </div>
+                <div id="schedule-container" class="space-y-4"></div>
+            </section>
+
+            <section id="tab-officers-list" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-section-glass p-6 rounded-2xl">
+                    <div>
+                        <h2 class="text-2xl font-black text-white tracking-wide">Church Representatives</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Leadership matrix profiles managing ministry cluster interaction scopes.</p>
+                    </div>
+                    <button onclick="openModal('officer')" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-3 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider shadow-lg">+ Deploy Executive Entity</button>
+                </div>
+                <div id="officers-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"></div>
+            </section>
+
+            <section id="tab-officers-meetings" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-section-glass p-6 rounded-2xl">
+                    <div>
+                        <h2 class="text-2xl font-black text-white tracking-wide">Strategic Council Meetings</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Documented historical archives of tactical design blueprints and meeting vector traces.</p>
+                    </div>
+                    <button onclick="openModal('meeting')" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-3 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider shadow-lg">+ Log Strategic Directive</button>
+                </div>
+                <div id="meetings-list" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+            </section>
+
+            <section id="tab-piso-day" class="tab-content hidden bg-section-glass p-6 md:p-8 rounded-2xl space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5">
+                    <div>
+                        <h2 class="text-2xl font-black text-white tracking-wide">Micro-Collection Ledger</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Daily collection metric tracking pipelines validating continuous investment protocols.</p>
+                    </div>
+                    <button onclick="openModal('piso')" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-3 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider shadow-lg">+ Allocate Ledger Entry</button>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-white/5 bg-black/10 shadow-inner">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-white/5 bg-[#0f1322]/50 font-black text-[10px] uppercase tracking-widest text-slate-400">
+                                <th class="p-4 pl-6">Participant Identity</th>
+                                <th class="p-4">Quantized Ledger Weight</th>
+                                <th class="p-4">Timestamp Trace</th>
+                                <th class="admin-only p-4 text-center">Operation Control</th>
+                            </tr>
+                        </thead>
+                        <tbody id="piso-table-body" class="divide-y divide-white/5"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="tab-polls" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-section-glass p-6 rounded-2xl">
+                    <div>
+                        <h2 class="text-2xl font-black text-white tracking-wide">Proposals & Elections</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Democratic pipeline mechanisms confirming deployment targets via consensus matching.</p>
+                    </div>
+                    <button onclick="openModal('poll')" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-3 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider shadow-lg">+ Propose Concept Ballot</button>
+                </div>
+                <div id="polls-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+            </section>
+
+            <section id="tab-funds" class="tab-content hidden bg-section-glass p-6 md:p-8 rounded-2xl space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5">
+                    <div>
+                        <h2 class="text-2xl font-black text-white tracking-wide">Financial Transparent Index</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Audit-ready tracking vectors reporting real-time fund allocations transparently.</p>
+                    </div>
+                    <button onclick="openModal('fund')" class="admin-only btn-premium-shimmer text-[#090d16] px-5 py-3 rounded-xl text-xs font-black transition-all cursor-pointer uppercase tracking-wider shadow-lg">+ Insert Transaction Line</button>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-white/5 bg-black/10 shadow-inner">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-white/5 bg-[#0f1322]/50 font-black text-[10px] uppercase tracking-widest text-slate-400">
+                                <th class="p-4 pl-6">Dimension Classification</th>
+                                <th class="p-4">Quantized Mass</th>
+                                <th class="p-4">Timestamp Node</th>
+                                <th class="p-4">Transactional Log Details</th>
+                                <th class="admin-only p-4 text-center">Operation Control</th>
+                            </tr>
+                        </thead>
+                        <tbody id="funds-table-body" class="divide-y divide-white/5"></tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="generic-modal" class="hidden fixed inset-0 bg-slate-950/80 flex items-center justify-center p-4 z-50 backdrop-blur-md transition-all duration-300">
+        <div class="bg-[#0d1220] rounded-2xl p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.6)] border border-white/10 max-h-[90vh] overflow-y-auto transform scale-100 transition-transform">
+            <div class="flex justify-between items-center mb-4 border-b border-white/5 pb-3">
+                <h3 id="modal-title" class="text-lg font-black text-white tracking-wide">Modify Repository Entry</h3>
             </div>
-        `).join('');
+            <div id="modal-fields" class="space-y-4"></div>
+            <div class="flex justify-end gap-3 mt-6 border-t border-white/5 pt-4">
+                <button onclick="closeModal()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer transition-colors">Cancel Interaction</button>
+                <button id="modal-save-btn" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-[#090d16] px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider cursor-pointer transition-colors shadow-lg shadow-amber-500/10">Commit Mutations</button>
+            </div>
+        </div>
+    </div>
 
-    } catch (err) {
-        console.error("Birthday tracking runtime intercept error:", err);
-        container.innerHTML = `<p class="text-xs text-rose-400 col-span-2 text-center">Celebration matrix offline.</p>`;
-    }
-}
-
-// ==========================================
-// EXPEDITE WINDOW SCOPE REGISTRATIONS
-// ==========================================
-window.toggleMobileSidebar = toggleMobileSidebar;
-window.switchTab = switchTab;
-window.toggleViewMode = toggleViewMode;
-window.applyPermissions = applyPermissions;
-window.login = login;
-window.logout = logout;
-window.fetchData = fetchData;
-window.deleteData = deleteData;
-window.voteEvent = voteEvent;
-window.setupCustomSunday = setupCustomSunday;
-window.closeModal = closeModal;
-window.openModal = openModal;
-window.openEditModal = openEditModal;
-window.openEditScheduleModal = openEditScheduleModal;
-window.openEditOfficerModal = openEditOfficerModal;
-window.openEditMeetingModal = openEditMeetingModal;
-window.openEditPisoModal = openEditPisoModal;
-window.openEditPollModal = openEditPollModal;
-window.openEditFundModal = openEditFundModal;
-window.renderBirthdayCalendar = renderBirthdayCalendar;
+    <script src="app (1).js"></script>
+</body>
+</html>
